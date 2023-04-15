@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, KeyboardEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircle, faPauseCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const Pylae33 = () => {
   const [mode, setMode] = useState('stopped');
-  const [mediaRecorders, setMediaRecorders] = useState([]);
-  const [recordingStream, setRecordingStream] = useState(null);
+  const [mediaRecorders, setMediaRecorders] = useState<MediaRecorder[]>([]);
+  const [recordingStream, setRecordingStream] = useState<MediaStream>();
   const [closeButtonFlash, setCloseButtonFlash] = useState(false);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ const Pylae33 = () => {
           track.stop();
         });
       }
-      mediaRecorders.forEach((mediaRecorder) => {
+      mediaRecorders.forEach((mediaRecorder: MediaRecorder) => {
         mediaRecorder.stop();
       });
     };
@@ -41,7 +41,7 @@ const Pylae33 = () => {
     if (mode === 'stopped') {
       // Start recording
       setMode('recording');
-      const mediaRecorder = new MediaRecorder(recordingStream);
+      const mediaRecorder = new MediaRecorder(recordingStream!);
       setMediaRecorders([mediaRecorder]);
       mediaRecorder.start();
     } else if (mode === 'recording') {
@@ -59,42 +59,46 @@ const Pylae33 = () => {
     }
   };
 
+
   const handleSaveClick = () => {
     // Stop recording the media recorder with the most seconds
-    const longestMediaRecorder = mediaRecorders.reduce((longest, current) => {
-      return current.startTime - longest.startTime > 0 ? current : longest;
-    });
+    const longestMediaRecorder = mediaRecorders[0];
+    const recordedChunks: Blob[] = [];
+    longestMediaRecorder.ondataavailable = (event) => {
+      recordedChunks.push(event.data)
+    }
+    longestMediaRecorder.onstop = (event) => {
+      // Generate the filename
+      const now = new Date();
+      const timestamp = `${now.getFullYear()}-${padZeros(now.getMonth() + 1, 2)}-${padZeros(now.getDate(), 2)} ${padZeros(now.getHours(), 2)}-${padZeros(now.getMinutes(), 2)}${padZeros(now.getSeconds(), 2)}`;
+      const duration = mediaRecorders.length
+      const filename = `pylae-33-${timestamp}_${duration}s.mp4`;
+
+      // Save the recording
+      const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+
+      // Reset the app
+      setMode('stopped');
+      newMediaRecorders.forEach((mediaRecorder) => {
+        mediaRecorder.stop();
+      });
+      setMediaRecorders([]);
+    }
     longestMediaRecorder.stop();
 
     // Remove any other media recorders
     const newMediaRecorders = mediaRecorders.filter((mediaRecorder) => {
       return mediaRecorder !== longestMediaRecorder;
     });
-    setMediaRecorders(newMediaRecorders);
-
-    // Generate the filename
-    const now = new Date();
-    const timestamp = `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())} ${padNumber(now.getHours())}-${padNumber(now.getMinutes())}${padNumber(now.getSeconds())}`;
-    const duration = padNumber(Math.floor(longestMediaRecorder.duration / 1000));
-    const filename = `pylae-33-${timestamp}_${duration}s.mp4`;
-
-    // Save the recording
-    const blob = new Blob(newMediaRecorders.map((mediaRecorder) => mediaRecorder.getBlob()), { type: 'video/mp4' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-
-    // Reset the app
-    setMode('stopped');
-    newMediaRecorders.forEach((mediaRecorder) => {
-      mediaRecorder.stop();
-    });
-    setMediaRecorders([]);
+    setMediaRecorders([longestMediaRecorder]);
   };
 
-  const handleEscapeKey = (event) => {
+  const handleEscapeKey = (event: KeyboardEvent) => {
     if (event.key === 'Escape') {
       event.preventDefault();
       if (mode === 'recording' || mode === 'paused') {
@@ -112,12 +116,13 @@ const Pylae33 = () => {
     }
   };
 
+  /* TODO: Fix Typescript
   useEffect(() => {
     document.addEventListener('keydown', handleEscapeKey);
     return () => {
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  });
+  }); */
 
   const closeButtonClassNames = ['close-button'];
   if (closeButtonFlash) {
@@ -148,7 +153,6 @@ const Pylae33 = () => {
         />
       </div>
       <div className="video-wrapper">
-        <video className="recording" src={mediaRecorders.length ? URL.createObjectURL(mediaRecorders[0].getBlob()) : null} autoPlay loop />
         <FontAwesomeIcon
           className="record-button"
           icon={mode === 'stopped' ? faCircle : mode === 'recording' ? faPauseCircle : faCircle}
@@ -160,5 +164,9 @@ const Pylae33 = () => {
     </div>
   );
 };
+
+function padZeros(n: number, ndigits: number) {
+  return `${n}`.padStart(ndigits, '0')
+}
 
 export default Pylae33;
