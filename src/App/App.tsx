@@ -1,6 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircle, faPauseCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import './App.css';
 
 const App: React.FC = () => {
@@ -105,38 +103,53 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="App">
-            <header>
-                <h1>Screen Recorder</h1>
-            </header>
-            <main>
-                {mode === 'stopped' && (
-                    <button onClick={handleStartRecording}>Start Recording</button>
-                )}
-                {(mode === 'recording' || mode === 'paused') && (
-                    <button onClick={handleStopRecording}>Stop Recording</button>
-                )}
-                {mode === 'paused' && (
-                    <button onClick={handleResumeRecording}>Resume Recording</button>
-                )}
-                {mode === 'recording' && (
-                    <button onClick={handlePauseRecording}>Pause Recording</button>
-                )}
-                {mode === 'saving' && (
-                    <button onClick={handleSaveRecording}>Save Recording</button>
-                )}
-                {downloadLink && (
-                    <div className="download-link-container">
-                        <a href={downloadLink} download="screen-recording.webm">Download Recording</a>
-                        <button onClick={handleCloseDownloadLink}>
-                            <FontAwesomeIcon icon={faTimes} />
-                        </button>
-                    </div>
-                )}
-                <video ref={videoRef} autoPlay muted></video>
-            </main>
+        <div className="app">
+          <h1>Screen Recorder</h1>
+          <div className="video-container">
+            <video ref={videoRef} autoPlay muted />
+            {mode === 'recording' && (
+              <div className="recording-indicator">
+                <span className="fas fa-circle" />
+                <p>Recording...</p>
+              </div>
+            )}
+          </div>
+          {mode === 'stopped' && (
+            <div className="controls">
+              <button className="btn" onClick={handleStartRecording}>
+                <i className="fas fa-circle" /> Start Recording
+              </button>
+            </div>
+          )}
+          {(mode === 'recording' || mode === 'paused') && (
+            <div className="controls">
+              <button className="btn" onClick={handlePauseRecording}>
+                <i className={mode === 'recording' ? 'fas fa-pause-circle' : 'fas fa-play-circle'} /> {mode === 'recording' ? 'Pause' : 'Resume'}
+              </button>
+              <button className="btn" onClick={handleStopRecording}>
+                <i className="fas fa-stop-circle" /> Stop
+              </button>
+            </div>
+          )}
+          {mode === 'saving' && (
+            <div className="saving-indicator">
+              <span className="fas fa-circle-notch fa-spin" />
+              <p>Saving...</p>
+            </div>
+          )}
+          {downloadLink && (
+            <div className="download-link-container">
+              <p>Your screen recording is ready to download:</p>
+              <a href={downloadLink} download>
+                <i className="fas fa-download" /> Download
+              </a>
+              <button className="close-btn" onClick={handleCloseDownloadLink}>
+                <i className="fas fa-times" />
+              </button>
+            </div>
+          )}
         </div>
-    );
+      );      
 };
 
 export default App;
