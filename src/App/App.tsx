@@ -17,7 +17,7 @@ const App: React.FC = () => {
           videoBitsPerSecond: 1_000_000,
         });
         newMediaRecorder.start();
-        setMediaRecorders((prevMediaRecorders) => [...prevMediaRecorders.slice(-33), newMediaRecorder]);
+        setMediaRecorders((prevMediaRecorders) => [...prevMediaRecorders.slice(-32), newMediaRecorder]);
       }, 1000);
       return () => clearInterval(intervalId);
     }
