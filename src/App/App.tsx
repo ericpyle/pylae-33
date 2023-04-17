@@ -6,8 +6,6 @@ const App: React.FC = () => {
   const [mode, setMode] = useState<'stopped' | 'recording' | 'paused' | 'saving'>('stopped');
   const [mediaRecorders, setMediaRecorders] = useState<MediaRecorder[]>([]);
   const [mediaStream, setMediaStream] = useState<MediaStream>();
-  const videoRef = useRef<HTMLVideoElement>(null);
-
 
     useEffect(() => {
         if (mode === 'recording') {
@@ -99,15 +97,6 @@ const App: React.FC = () => {
 
     return (
         <div className="app">
-          <div className="video-container">
-            <video ref={videoRef} autoPlay muted />
-            {mode === 'recording' && (
-              <div className="recording-indicator">
-                <span className="fas fa-circle" />
-                <p>Recording...</p>
-              </div>
-            )}
-          </div>
           {mode === 'stopped' && (
             <div className="controls">
               <button className="btn btn-record" onClick={handleStartRecording}>
