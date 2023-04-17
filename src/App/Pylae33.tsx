@@ -63,6 +63,10 @@ const Pylae33 = () => {
   const handleSaveClick = () => {
     // Stop recording the media recorder with the most seconds
     const longestMediaRecorder = mediaRecorders[0];
+    // Remove any other media recorders
+    const newMediaRecorders = mediaRecorders.filter((mediaRecorder) => {
+      return mediaRecorder !== longestMediaRecorder;
+    });
     const recordedChunks: Blob[] = [];
     longestMediaRecorder.ondataavailable = (event) => {
       recordedChunks.push(event.data)
@@ -90,11 +94,6 @@ const Pylae33 = () => {
       setMediaRecorders([]);
     }
     longestMediaRecorder.stop();
-
-    // Remove any other media recorders
-    const newMediaRecorders = mediaRecorders.filter((mediaRecorder) => {
-      return mediaRecorder !== longestMediaRecorder;
-    });
     setMediaRecorders([longestMediaRecorder]);
   };
 
