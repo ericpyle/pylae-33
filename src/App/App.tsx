@@ -3,7 +3,7 @@ import './App.css';
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 const App: React.FC = () => {
-  const [mode, setMode] = useState<'stopped' | 'recording' | 'paused' | 'saving'>('stopped');
+  const [mode, setMode] = useState<'stopped' | 'record-pressed' | 'recording' | 'paused' | 'saving'>('stopped');
   const [mediaRecorders, setMediaRecorders] = useState<MediaRecorder[]>([]);
   const [mediaStream, setMediaStream] = useState<MediaStream>();
 
@@ -21,8 +21,42 @@ const App: React.FC = () => {
         }
     }, [mode, mediaStream]);
 
+    const handleKeyShortcut = (event: KeyboardEvent) => {
+      console.log(JSON.stringify(event.key));
+      if (event.key === ' ' || event.key === 'Enter') {
+        event.preventDefault();
+        if (mode === 'stopped') {
+          handleStartRecording();
+          return;
+        }
+        if (mode === 'recording') {
+          handlePauseRecording();
+          return;
+        }
+        if (mode === 'paused') {
+          handleResumeRecording();
+          return;
+        }
+      }
+      if (mode === 'paused' && event.ctrlKey && event.key === 's') {
+        event.preventDefault();
+        handleSaveRecording();
+        return;
+      }
+
+    };
+
+    useEffect(() => {
+      document.addEventListener('keydown', handleKeyShortcut);
+      return () => {
+        document.removeEventListener('keydown', handleKeyShortcut);
+      };
+    }, [handleKeyShortcut]);
+
+
     const handleStartRecording = async () => {
         try {
+            setMode('record-pressed');
             const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: { mediaSource: 'screen' },
                 audio: false,
@@ -38,6 +72,7 @@ const App: React.FC = () => {
             setMode('recording');
         } catch (error) {
             console.error('Error starting screen recording: ', error);
+            setMode('stopped');
         }
     };
 
@@ -97,15 +132,15 @@ const App: React.FC = () => {
 
     return (
         <div className="app">
-          {mode === 'stopped' && (
-            <div className="controls">
+          {(mode === 'stopped' || mode === 'record-pressed') && (
+            <div className="controls" title="(Space/Enter)">
               <button className="btn btn-record" onClick={handleStartRecording}>
-                <i className="fas fa-circle" /> Start Recording
+                <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record
               </button>
             </div>
           )}
           {(mode === 'recording') && (
-            <div className="controls">
+            <div className="controls" title="(Space/Enter)">
               <button className="btn btn-pause" onClick={handlePauseRecording}>
                 <i className="fas fa-pause-circle" /> Pause
               </button>
@@ -113,10 +148,10 @@ const App: React.FC = () => {
           )}
           {(mode === 'paused') && (
             <div className="controls">
-              <button className="btn btn-resume" onClick={handleResumeRecording}>
-                <i className={'fas fa-pause-circle fa-spin'} /> Resume
+              <button className="btn btn-resume" title="(Space/Enter)" onClick={handleResumeRecording}>
+                <i className={'fas fa-pause-circle fa-spin fa-inverse'} /> Resume
               </button>
-              <button className="btn btn-save" onClick={handleSaveRecording}>
+              <button className="btn btn-save" title="(Ctrl+S)" onClick={handleSaveRecording}>
                 <i className="fas fa-save" /> Save
               </button>
             </div>
