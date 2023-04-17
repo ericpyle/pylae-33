@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import '@fortawesome/fontawesome-free/css/all.min.css'
+
+const recordedChunks: Blob[] = [];
 
 const App: React.FC = () => {
   const [mode, setMode] = useState<'stopped' | 'recording' | 'paused' | 'saving'>('stopped');
@@ -14,12 +16,37 @@ const App: React.FC = () => {
                     mimeType: 'video/webm; codecs=vp9',
                     videoBitsPerSecond: 1_000_000,
                 });
-                newMediaRecorder.start();
-                setMediaRecorders((prevMediaRecorders) => [...prevMediaRecorders.slice(-32), newMediaRecorder]);
+                newMediaRecorder.start(1000);
+                setMediaRecorders((prevMediaRecorders) => {
+                    if (prevMediaRecorders.length === 0) {
+                        console.log('ondataavailable')
+                        newMediaRecorder.ondataavailable = (event) => {
+                            recordedChunks.push(event.data);
+                            console.log('got recorded chunks' + recordedChunks.length);
+                        }
+                    }
+                    if (prevMediaRecorders.length > 32) {
+                        recordedChunks.splice(0,1);
+                        if (prevMediaRecorders[0].ondataavailable) {
+                            // designate last mediaRecorder to collect data before we remove the first one
+                            prevMediaRecorders[32].ondataavailable = prevMediaRecorders[0].ondataavailable; 
+                            prevMediaRecorders[0].ondataavailable = null;
+                            newMediaRecorder.ondataavailable = null;
+                            console.log('ondataavailable reset')
+                        }
+                    }
+                    return [...prevMediaRecorders.slice(-32), newMediaRecorder]
+                });
             }, 1000);
             return () => clearInterval(intervalId);
         }
     }, [mode, mediaStream]);
+
+    function resetToStoppedMode() {
+        recordedChunks.splice(0)
+        setMediaRecorders([]);
+        setMode('stopped');
+    }
 
     const handleStartRecording = async () => {
         try {
@@ -30,10 +57,7 @@ const App: React.FC = () => {
             });
             // handle if the user stops sharing screen
             // see https://stackoverflow.com/a/25179198
-            stream.getVideoTracks()[0].onended = function () {
-                setMediaRecorders([]);
-                setMode('stopped');
-            };
+            stream.getVideoTracks()[0].onended = resetToStoppedMode;
             setMediaStream(stream);
             setMode('recording');
         } catch (error) {
@@ -62,10 +86,6 @@ const App: React.FC = () => {
     const handleSaveRecording = () => {
         // Stop recording the media recorder with the most seconds
         const longestMediaRecorder = mediaRecorders[0];
-        const recordedChunks: Blob[] = [];
-        longestMediaRecorder.ondataavailable = (event) => {
-            recordedChunks.push(event.data)
-        }
         longestMediaRecorder.onstop = (event) => {
             // Generate the filename
             const now = new Date();
@@ -89,8 +109,7 @@ const App: React.FC = () => {
             mediaStream?.getTracks().forEach((track) => {
                 track.stop();
             });
-            setMediaRecorders([]);
-            setMode('stopped');
+            resetToStoppedMode();
         }
         longestMediaRecorder.stop();
     };
