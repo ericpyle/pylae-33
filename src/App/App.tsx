@@ -30,6 +30,12 @@ const App: React.FC = () => {
                 audio: false,
                 frameRate: 11,
             });
+            // handle if the user stops sharing screen
+            // see https://stackoverflow.com/a/25179198
+            stream.getVideoTracks()[0].onended = function () {
+                setMediaRecorders([]);
+                setMode('stopped');
+            };
             setMediaStream(stream);
             setMode('recording');
         } catch (error) {
