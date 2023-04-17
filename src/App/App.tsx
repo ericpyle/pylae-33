@@ -9,19 +9,19 @@ const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
 
-  useEffect(() => {
-    if (mode === 'recording') {
-      const intervalId = setInterval(() => {
-        const newMediaRecorder = new MediaRecorder(mediaStream!, {
-          mimeType: 'video/webm; codecs=vp9',
-          videoBitsPerSecond: 1_000_000,
-        });
-        newMediaRecorder.start();
-        setMediaRecorders((prevMediaRecorders) => [...prevMediaRecorders.slice(-32), newMediaRecorder]);
-      }, 1000);
-      return () => clearInterval(intervalId);
-    }
-  }, [mode, mediaStream]);
+    useEffect(() => {
+        if (mode === 'recording') {
+            const intervalId = setInterval(() => {
+                const newMediaRecorder = new MediaRecorder(mediaStream!, {
+                    mimeType: 'video/webm; codecs=vp9',
+                    videoBitsPerSecond: 1_000_000,
+                });
+                newMediaRecorder.start();
+                setMediaRecorders((prevMediaRecorders) => [...prevMediaRecorders.slice(-32), newMediaRecorder]);
+            }, 1000);
+            return () => clearInterval(intervalId);
+        }
+    }, [mode, mediaStream]);
 
     const handleStartRecording = async () => {
         try {
