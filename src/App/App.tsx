@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
+const isSupportedInBrowser = navigator.mediaDevices &&
+            "getDisplayMedia" in navigator.mediaDevices
+
 const App: React.FC = () => {
   const [mode, setMode] = useState<'stopped' | 'record-pressed' | 'recording' | 'paused' | 'saving'>('stopped');
   const [mediaRecorders, setMediaRecorders] = useState<MediaRecorder[]>([]);
@@ -58,7 +61,11 @@ const App: React.FC = () => {
         try {
             setMode('record-pressed');
             const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { displaySurface: "monitor", frameRate: 11 },
+                video: {
+                  /* displaySurface seems to block keyboard */
+                  /* frameRate seems to lose cursor */
+                  /* displaySurface: "monitor", frameRate: 11 */
+                 },
                 audio: false,
             });
             // handle if the user stops sharing screen
@@ -131,7 +138,8 @@ const App: React.FC = () => {
 
     return (
         <div className="app">
-          {(mode === 'stopped' || mode === 'record-pressed') && (
+          {!isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>}
+          {(isSupportedInBrowser && mode === 'stopped' || mode === 'record-pressed') && (
             <div className="controls" title="(Space/Enter)">
               <button className="btn btn-record" onClick={handleStartRecording}>
                 <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record

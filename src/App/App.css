@@ -16,6 +16,15 @@ body {
   .video {
     width: 100%;
   }
+
+  .warn-unsupported {
+    margin: auto;
+    border-style: solid;
+    border-width: thin;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: lightyellow;
+  }
   
   .controls {
     background-color: #fff;
@@ -39,7 +48,7 @@ body {
   }
 
   .btn-record, .btn-pause, .btn-resume {
-    color: red;
+    color: rgb(255, 0, 0);
   }
   
   .button:hover {
