@@ -58,9 +58,8 @@ const App: React.FC = () => {
         try {
             setMode('record-pressed');
             const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: { mediaSource: 'screen' },
+                video: { displaySurface: "monitor", frameRate: 11 },
                 audio: false,
-                frameRate: 11,
             });
             // handle if the user stops sharing screen
             // see https://stackoverflow.com/a/25179198
@@ -101,7 +100,7 @@ const App: React.FC = () => {
         longestMediaRecorder.ondataavailable = (event) => {
             recordedChunks.push(event.data)
         }
-        longestMediaRecorder.onstop = (event) => {
+        longestMediaRecorder.onstop = () => {
             // Generate the filename
             const now = new Date();
             const timestamp = `${now.getFullYear()}-${padZeros(now.getMonth() + 1, 2)}-${padZeros(now.getDate(), 2)} ${padZeros(now.getHours(), 2)}-${padZeros(now.getMinutes(), 2)}${padZeros(now.getSeconds(), 2)}`;
