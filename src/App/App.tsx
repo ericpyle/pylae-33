@@ -67,8 +67,9 @@ const App: React.FC = () => {
             const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
                   /* displaySurface seems to block keyboard */
-                  /* frameRate seems to lose cursor */
-                  /* displaySurface: "monitor", frameRate: 11 */
+                  /* displaySurface: "monitor", */
+                  /* low frameRate seems to lose cursor but is less GPU intensive */
+                  frameRate: 11,
                  },
                 audio: false,
             });
