@@ -18,7 +18,11 @@ const App: React.FC = () => {
                     videoBitsPerSecond: 1_000_000,
                 });
                 newMediaRecorder.start();
-                setMediaRecorders((prevMediaRecorders) => [...prevMediaRecorders.slice(-32), newMediaRecorder]);
+                setMediaRecorders((prevMediaRecorders) => {
+                  if (prevMediaRecorders.length === 33)
+                    stopRecorders(prevMediaRecorders.slice(0,1)); // stop the first one
+                  return [...prevMediaRecorders.slice(-32), newMediaRecorder];
+                });
             }, 1000);
             return () => clearInterval(intervalId);
         }
@@ -123,10 +127,7 @@ const App: React.FC = () => {
             link.click();
 
             // Reset the app
-            mediaRecorders.forEach((mediaRecorder) => {
-                if (mediaRecorder.state !== 'inactive')
-                    mediaRecorder.stop();
-            });
+            stopRecorders(mediaRecorders);
             mediaStream?.getTracks().forEach((track) => {
                 track.stop();
             });
@@ -172,6 +173,13 @@ const App: React.FC = () => {
         </div>
       );      
 };
+
+function stopRecorders(mediaRecorders: MediaRecorder[]) {
+  mediaRecorders.forEach((mediaRecorder) => {
+    if (mediaRecorder.state !== 'inactive')
+      mediaRecorder.stop();
+  });
+}
 
 function padZeros(n: number, ndigits: number = 2) {
     return `${n}`.padStart(ndigits, '0')
