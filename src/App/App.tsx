@@ -5,6 +5,12 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 const isSupportedInBrowser = navigator.mediaDevices &&
             "getDisplayMedia" in navigator.mediaDevices
 
+
+const MAX_DURATION = 33000
+const RECORDING_INTERVAL = 3000
+const MAX_RECORDERS = MAX_DURATION / RECORDING_INTERVAL
+// console.log({MAX_RECORDERS, RECORDING_INTERVAL})
+
 const App: React.FC = () => {
   const [mode, setMode] = useState<'stopped' | 'record-pressed' | 'recording' | 'paused' | 'saving'>('stopped');
   const [mediaRecorders, setMediaRecorders] = useState<MediaRecorder[]>([]);
@@ -18,18 +24,21 @@ const App: React.FC = () => {
                     videoBitsPerSecond: 1_000_000,
                 });
                 newMediaRecorder.start();
+                if ('memory' in window.performance)
+                  // console.log({memory: window.performance.memory})
                 setMediaRecorders((prevMediaRecorders) => {
-                  if (prevMediaRecorders.length === 33)
+                  // console.log({prevMediaRecorders})
+                  if (prevMediaRecorders.length === MAX_RECORDERS)
                     stopRecorders(prevMediaRecorders.slice(0,1)); // stop the first one
-                  return [...prevMediaRecorders.slice(-32), newMediaRecorder];
+                  return [...prevMediaRecorders.slice(-(MAX_RECORDERS - 1)), newMediaRecorder];
                 });
-            }, 1000);
+            }, RECORDING_INTERVAL);
             return () => clearInterval(intervalId);
         }
     }, [mode, mediaStream]);
 
     const handleKeyShortcut = (event: KeyboardEvent) => {
-      console.log(JSON.stringify(event.key));
+      // console.log(JSON.stringify(event.key));
       if (event.key === ' ' || event.key === 'Enter') {
         event.preventDefault();
         if (mode === 'stopped') {
@@ -116,7 +125,7 @@ const App: React.FC = () => {
             // Generate the filename
             const now = new Date();
             const timestamp = `${now.getFullYear()}-${padZeros(now.getMonth() + 1, 2)}-${padZeros(now.getDate(), 2)} ${padZeros(now.getHours(), 2)}-${padZeros(now.getMinutes(), 2)}${padZeros(now.getSeconds(), 2)}`;
-            const duration = mediaRecorders.length
+            const duration = mediaRecorders.length * RECORDING_INTERVAL / 1000
             const filename = `pylae-33-${timestamp}_${duration}s.mp4`;
 
             // Save the recording
