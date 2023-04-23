@@ -26,5 +26,5 @@ npm run dev
 Source
 ``` 
 index.html
-src/App.tsx
+src/App/App.tsx
 ```
