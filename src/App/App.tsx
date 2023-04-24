@@ -150,13 +150,32 @@ const App: React.FC = () => {
     return (
         <div className="app">
           {!isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>}
-          {(isSupportedInBrowser && mode === 'stopped' || mode === 'record-pressed') && (
+        {(isSupportedInBrowser && mode === 'stopped' || mode === 'record-pressed') && (
+          <div>
+            <h3>How to use Pylae-33</h3>
+            <video src="https://user-images.githubusercontent.com/1125565/233755686-a0ebc300-1bd1-4584-afe0-3b02150d39d8.mp4" autoPlay loop muted controls className="d-block rounded-bottom-2 border-top width-fit" style={{ maxHeight :"640px", minHeight: "200px"}} data-video="0"/>
             <div className="controls" title="(Space/Enter)">
               <button className="btn btn-record" onClick={handleStartRecording}>
                 <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record
               </button>
             </div>
+          </div>
           )}
+          {(mode !== 'stopped') && mode !== 'record-pressed' && <div>
+            <h3>Alternative instructions:</h3>
+                <h4>Using recording software to try and catch random crashes.</h4>
+                Suggested steps:
+                <ol>
+                <li>Install OBS from <a href="https://obsproject.com/download" target="_blank">https://obsproject.com/download</a></li>
+                <li>Run the installer and choose to optimize for virtual camera.</li>
+                <li>Add the display where [our product] will be used to the Sources panel</li>
+                <li>Go to Settings -&gt; Output and choose .mp4 format and then select the 'Enable Replay Buffer' under Recording</li>
+                <li>Set the Maximum Replay Time to 120 seconds.</li>
+                <li>Click 'Start Replay Buffer' and use [our product]</li>
+                <li>When it crashes click on the Save Replay button (looks like a download icon)</li>
+                <li>Send support that file</li>
+                </ol>
+          </div>}
           {(mode === 'recording') && (
             <div className="controls" title="(Space/Enter)">
               <button className="btn btn-pause" onClick={handlePauseRecording}>
