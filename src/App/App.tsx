@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
@@ -13,7 +13,7 @@ const MAX_RECORDERS = MAX_DURATION / RECORDING_INTERVAL
 
 const App: React.FC = () => {
   const [mode, setMode] = useState<'stopped' | 'record-pressed' | 'recording' | 'paused' | 'saving'>('stopped');
-  const [mediaRecorders, setMediaRecorders] = useState<MediaRecorder[]>([]);
+  const mediaRecordersRef = useRef<MediaRecorder[]>([]);
   const [mediaStream, setMediaStream] = useState<MediaStream>();
 
     useEffect(() => {
@@ -23,15 +23,17 @@ const App: React.FC = () => {
                     mimeType: 'video/webm; codecs=vp9',
                     videoBitsPerSecond: 1_000_000,
                 });
+                const foo = Date.now().toString();
+                console.log({ mediaRecorders: mediaRecordersRef.current.length }, foo);
                 newMediaRecorder.start();
-                if ('memory' in window.performance)
-                  // console.log({memory: window.performance.memory})
-                setMediaRecorders((prevMediaRecorders) => {
-                  // console.log({prevMediaRecorders})
-                  if (prevMediaRecorders.length === MAX_RECORDERS)
-                    stopRecorders(prevMediaRecorders.slice(0,1)); // stop the first one
-                  return [...prevMediaRecorders.slice(-(MAX_RECORDERS - 1)), newMediaRecorder];
-                });
+                console.log('started');
+                // if ('memory' in window.performance)
+                // console.log({memory: window.performance.memory})
+                if (mediaRecordersRef.current.length === MAX_RECORDERS) {
+                    stopRecorders(mediaRecordersRef.current.slice(0,1)); // stop the first one
+                }
+                mediaRecordersRef.current = [...mediaRecordersRef.current.slice(-(MAX_RECORDERS - 1)), newMediaRecorder]
+                console.log({states: mediaRecordersRef.current.map(mr => mr.state)})
             }, RECORDING_INTERVAL);
             return () => clearInterval(intervalId);
         }
@@ -85,7 +87,7 @@ const App: React.FC = () => {
             // handle if the user stops sharing screen
             // see https://stackoverflow.com/a/25179198
             stream.getVideoTracks()[0].onended = function () {
-                setMediaRecorders([]);
+                mediaRecordersRef.current =  [];
                 setMode('stopped');
             };
             setMediaStream(stream);
@@ -97,7 +99,7 @@ const App: React.FC = () => {
     };
 
     const handlePauseRecording = () => {
-        mediaRecorders.forEach((mediaRecorder) => {
+        mediaRecordersRef.current.forEach((mediaRecorder) => {
             if (mediaRecorder.state === 'recording') {
                 mediaRecorder.pause();
             }
@@ -106,7 +108,7 @@ const App: React.FC = () => {
     };
 
     const handleResumeRecording = () => {
-        mediaRecorders.forEach((mediaRecorder) => {
+        mediaRecordersRef.current.forEach((mediaRecorder) => {
             if (mediaRecorder.state === 'paused') {
                 mediaRecorder.resume();
             }
@@ -116,7 +118,8 @@ const App: React.FC = () => {
 
     const handleSaveRecording = () => {
         // Stop recording the media recorder with the most seconds
-        const longestMediaRecorder = mediaRecorders[0];
+        console.log({statesInSave: mediaRecordersRef.current.map(mr => mr.state)})
+        const longestMediaRecorder = mediaRecordersRef.current[0];
         const recordedChunks: Blob[] = [];
         longestMediaRecorder.ondataavailable = (event) => {
             recordedChunks.push(event.data)
@@ -125,7 +128,7 @@ const App: React.FC = () => {
             // Generate the filename
             const now = new Date();
             const timestamp = `${now.getFullYear()}-${padZeros(now.getMonth() + 1, 2)}-${padZeros(now.getDate(), 2)} ${padZeros(now.getHours(), 2)}-${padZeros(now.getMinutes(), 2)}${padZeros(now.getSeconds(), 2)}`;
-            const duration = mediaRecorders.length * RECORDING_INTERVAL / 1000
+            const duration = mediaRecordersRef.current.length * RECORDING_INTERVAL / 1000
             const filename = `pylae-33-${timestamp}_${duration}s.mp4`;
 
             // Save the recording
@@ -137,11 +140,11 @@ const App: React.FC = () => {
             link.click();
 
             // Reset the app
-            stopRecorders(mediaRecorders);
+            stopRecorders(mediaRecordersRef.current);
             mediaStream?.getTracks().forEach((track) => {
                 track.stop();
             });
-            setMediaRecorders([]);
+            mediaRecordersRef.current = [];
             setMode('stopped');
         }
         longestMediaRecorder.stop();
