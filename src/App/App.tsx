@@ -16,6 +16,7 @@ const MAX_RECORDERS = MAX_DURATION / RECORDING_INTERVAL
  */
 function useInterval(callback: () => void, delay: number | null) {
   const savedCallback = useRef<() => void>();
+  const savedIntervalId = useRef<number>();
 
   // Remember the latest callback.
   useEffect(() => {
@@ -27,8 +28,15 @@ function useInterval(callback: () => void, delay: number | null) {
     function tick() {
       savedCallback.current!();
     }
+    console.log('useInterval useEffect delay: ' + delay)
+    console.log('savedIntervalId: ' + savedIntervalId.current);
+    if (savedIntervalId.current !== undefined) {
+      console.log('clearInterval: ' + savedIntervalId.current);
+      clearInterval(savedIntervalId.current)
+    }
     if (delay !== null) {
       let id = setInterval(tick, delay);
+      savedIntervalId.current = id
       console.log(`setInterval ${id} ${delay}`)
       return () => clearInterval(id);
     }
@@ -63,24 +71,24 @@ const App: React.FC = () => {
 
   useInterval(() => {
     console.log({ countDown, timestamp: Date.now().toString() })
-    if (countDown === 0) {
-      console.log('resuming: ' + Date.now().toString())
-      mediaRecordersRef.current[0].resume()
+    if (countDown === 3) {
+      addToMediaRecorders();
+      console.log('pausing for countdown: ' + Date.now().toString());
+      mediaRecordersRef.current[0].pause();
     }
-    else if (countDown === 3) {
-      addToMediaRecorders()
-      console.log('pausing for countdown: ' + Date.now().toString())
-      mediaRecordersRef.current[0].pause()
-    }
-    setCountDown(countDown - 1)
-  }, (mode === 'recording' && countDown >= 0) ? 1000 : null);
+    setCountDown(countDown - 1);
+  }, (mode === 'recording' && countDown > 0) ? 1000 : null);
 
   useInterval(() => {
-    if (countDown > 0)
+    if (mediaRecordersRef.current[0].state === 'paused') {
+      console.log('resuming: ' + Date.now().toString());
+      mediaRecordersRef.current[0].resume();
       return;
-    console.log('adding to mediarecorders: ' + Date.now().toString())
+    }
+    console.log('adding to mediarecorders: ' + Date.now().toString());
     addToMediaRecorders();
-  }, (mode === 'recording') ? RECORDING_INTERVAL : null);
+
+  }, (mode === 'recording' && countDown == 0) ? RECORDING_INTERVAL : null);
 
   const handleKeyShortcut = (event: KeyboardEvent) => {
     // console.log(JSON.stringify(event.key));
