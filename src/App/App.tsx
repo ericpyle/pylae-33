@@ -48,6 +48,7 @@ const App: React.FC = () => {
   const mediaRecordersRef = useRef<MediaRecorder[]>([]);
   const mediaStreamRef = useRef<MediaStream>();
   const [countDown, setCountDown] = useState(3);
+  const [savedVideoUrl, setSavedVideoUrl] = useState<string>()
 
   console.log({ mode, countDown })
 
@@ -169,6 +170,7 @@ const App: React.FC = () => {
   };
 
   const handleSaveRecording = () => {
+    setMode('saving');
     // Stop recording the media recorder with the most seconds
     console.log({ statesInSave: mediaRecordersRef.current.map(mr => mr.state) })
     const longestMediaRecorder = mediaRecordersRef.current[0];
@@ -190,6 +192,7 @@ const App: React.FC = () => {
       link.href = url;
       link.download = filename;
       link.click();
+      setSavedVideoUrl(url);
 
       // Reset the app
       stopRecorders(mediaRecordersRef.current);
@@ -202,15 +205,21 @@ const App: React.FC = () => {
     longestMediaRecorder.stop();
   };
 
+  if (!isSupportedInBrowser) {
+    return <div className="app">
+      {!isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>}
+    </div>
+  }
+
+  const videoUrl = savedVideoUrl ?? 'https://user-images.githubusercontent.com/1125565/233755686-a0ebc300-1bd1-4584-afe0-3b02150d39d8.mp4' 
   return (
     <div className="app">
-      {!isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>}
-      {(isSupportedInBrowser && mode === 'stopped' || mode === 'record-pressed') && (
+      {(mode === 'stopped' || mode === 'record-pressed') && (
         <div>
-          <h3>How to use Pylae-33</h3>
-          <video src="https://user-images.githubusercontent.com/1125565/233755686-a0ebc300-1bd1-4584-afe0-3b02150d39d8.mp4" autoPlay loop muted controls className="d-block rounded-bottom-2 border-top width-fit" style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />
+          {!savedVideoUrl && <h3>How to use Pylae-33</h3>}
+          <video src={videoUrl} muted controls className="d-block rounded-bottom-2 border-top width-fit" style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />
           <div className="controls" title="(Space/Enter)">
-            <button className="btn btn-record" onClick={handleStartRecording}>
+            <button type="button" className="btn btn-record" onClick={handleStartRecording}>
               <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record
             </button>
           </div>
