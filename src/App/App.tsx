@@ -245,7 +245,7 @@ const App: React.FC = () => {
       {(mode === 'recording' && countDown > 0) && (
         <div className="controls sticky-nav" title="(Space/Enter)">
           <button className="btn btn-pause" onClick={() => console.log('Recording countdown')}>
-            <i className="fas fa-circle fa-inverse" /> Recording in {countDown.toString().padStart(countDown)} second{countDown > 1 && 's'}
+            <i className="fas fa-circle fa-inverse" /> Recording in {padZeros(countDown, countDown)} second{countDown > 1 && 's'}
           </button>
         </div>
       )}
