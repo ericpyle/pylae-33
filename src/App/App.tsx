@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import '@fortawesome/fontawesome-free/css/all.min.css'
-import StickyNavbar from './StickyNavbar';
 
 const isSupportedInBrowser = navigator.mediaDevices &&
   "getDisplayMedia" in navigator.mediaDevices
@@ -44,11 +43,13 @@ function useInterval(callback: () => void, delay: number | null) {
   }, [delay]);
 }
 
+const COUNT_DOWN_FROM = 3
+
 const App: React.FC = () => {
   const [mode, setMode] = useState<'stopped' | 'record-pressed' | 'recording' | 'paused' | 'saving'>('stopped');
   const mediaRecordersRef = useRef<MediaRecorder[]>([]);
   const mediaStreamRef = useRef<MediaStream>();
-  const [countDown, setCountDown] = useState(3);
+  const [countDown, setCountDown] = useState(COUNT_DOWN_FROM);
   const [savedVideoUrl, setSavedVideoUrl] = useState<string>()
 
   console.log({ mode, countDown })
@@ -73,10 +74,10 @@ const App: React.FC = () => {
 
   useInterval(() => {
     console.log({ countDown, timestamp: Date.now().toString() })
-    if (countDown === 3) {
+    if (countDown === COUNT_DOWN_FROM) {
       addToMediaRecorders();
       console.log('pausing for countdown: ' + Date.now().toString());
-      mediaRecordersRef.current[0].pause();
+      // mediaRecordersRef.current[0].pause();
     }
     setCountDown(countDown - 1);
   }, (mode === 'recording' && countDown > 0) ? 1000 : null);
@@ -144,7 +145,7 @@ const App: React.FC = () => {
         setMode('stopped');
       };
       mediaStreamRef.current = stream;
-      setCountDown(3);
+      setCountDown(COUNT_DOWN_FROM);
       setMode('recording');
     } catch (error) {
       console.error('Error starting screen recording: ', error);
