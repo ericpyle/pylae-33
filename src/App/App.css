@@ -88,3 +88,12 @@ video {
   width: auto    !important;
   height: 100%   !important;
 }
+
+.video-container.with-title {
+  display: flex;
+  align-items: center;
+}
+
+.video-title {
+  font-family: system-ui;
+}

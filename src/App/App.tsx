@@ -221,8 +221,9 @@ const App: React.FC = () => {
             <button type="button" className="btn btn-record" onClick={handleStartRecording}>
               <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record
             </button>
-            <div className="video-container">
-              <video src={videoUrl} muted controls style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />
+            <div className="video-container with-title">
+              {!savedVideoUrl && <h1 className="video-title">How to use Pylae-33</h1>}
+              <video title={savedVideoUrl ? 'Saved video' : 'How to use Pylae-33'}  src={videoUrl} muted controls style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />
             </div>
           </div>
         </div>
