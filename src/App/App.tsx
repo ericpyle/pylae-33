@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import '@fortawesome/fontawesome-free/css/all.min.css'
+import StickyNavbar from './StickyNavbar';
 
 const isSupportedInBrowser = navigator.mediaDevices &&
   "getDisplayMedia" in navigator.mediaDevices
@@ -212,16 +213,17 @@ const App: React.FC = () => {
   }
 
   const videoUrl = savedVideoUrl ?? 'https://user-images.githubusercontent.com/1125565/233755686-a0ebc300-1bd1-4584-afe0-3b02150d39d8.mp4' 
-  return (
+  return (<>
     <div className="app">
       {(mode === 'stopped' || mode === 'record-pressed') && (
         <div>
-          {!savedVideoUrl && <h3>How to use Pylae-33</h3>}
-          <video src={videoUrl} muted controls className="d-block rounded-bottom-2 border-top width-fit" style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />
-          <div className="controls" title="(Space/Enter)">
+          <div className="controls sticky-nav" title="(Space/Enter)">
             <button type="button" className="btn btn-record" onClick={handleStartRecording}>
               <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record
             </button>
+            <div className="video-container">
+              <video src={videoUrl} muted controls style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />
+            </div>
           </div>
         </div>
       )}
@@ -241,21 +243,21 @@ const App: React.FC = () => {
         </ol>
       </div>}
       {(mode === 'recording' && countDown > 0) && (
-        <div className="controls" title="(Space/Enter)">
+        <div className="controls sticky-nav" title="(Space/Enter)">
           <button className="btn btn-pause" onClick={() => console.log('Recording countdown')}>
-            <i className="fas fa-circle fa-inverse" /> Recording in {countDown} second{countDown > 1 && 's'}
+            <i className="fas fa-circle fa-inverse" /> Recording in {countDown.toString().padStart(countDown)} second{countDown > 1 && 's'}
           </button>
         </div>
       )}
       {(mode === 'recording' && countDown <= 0) && (
-        <div className="controls" title="(Space/Enter)">
+        <div className="controls sticky-nav" title="(Space/Enter)">
           <button className="btn btn-pause" onClick={handlePauseRecording}>
             <i className="fas fa-pause-circle" /> Pause
           </button>
         </div>
       )}
       {(mode === 'paused') && (
-        <div className="controls">
+        <div className="controls sticky-nav">
           <button className="btn btn-resume" title="(Space/Enter)" onClick={handleResumeRecording}>
             <i className={'fas fa-pause-circle fa-spin fa-inverse'} /> Resume
           </button>
@@ -265,13 +267,13 @@ const App: React.FC = () => {
         </div>
       )}
       {mode === 'saving' && (
-        <div className="saving-indicator">
+        <div className="controls sticky-nav saving-indicator">
           <span className="fas fa-circle-notch fa-spin" />
           <p>Saving...</p>
         </div>
       )}
     </div>
-  );
+    </>);
 };
 
 function stopRecorders(mediaRecorders: MediaRecorder[]) {

@@ -1,78 +1,90 @@
 body {
-    background-color: #f5f5f5;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-  }
-  
-  .app {
-    margin: 50px auto;
-  }
-  
-  .video {
-    width: 100%;
-  }
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
 
-  .warn-unsupported {
-    margin: auto;
-    border-style: solid;
-    border-width: thin;
-    padding: 10px;
-    border-radius: 10px;
-    background-color: lightyellow;
-  }
-  
-  .controls {
-    background-color: #fff;
-    bottom: 0;
-    display: flex;
-    left: 0;
-    position: absolute;
-    right: 0;
-    justify-content: left;
-    padding: 20px 0;
-  }
-  
-  .btn {
-    background-color: black;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
-    margin: 0 10px;
-    padding: 10px;
-  }
+.app {
+  margin: 50px auto;
+}
 
-  .btn-record, .btn-pause, .btn-resume {
-    color: rgb(255, 0, 0);
-  }
-  
-  .button:hover {
-    background-color: #3e8e41;
-  }
-  
-  .save-button {
-    background-color: #2196F3;
-    margin-left: auto;
-  }
-  
-  .save-button:hover {
-    background-color: #0c7cd5;
-  }
-  
-  .cancel-button {
-    background-color: #f44336;
-  }
-  
-  .cancel-button:hover {
-    background-color: #d11a0b;
-  }
-  
-  .download-link {
-    margin-top: 20px;
-  }
-  
-  .icon {
-    margin-right: 5px;
-  }
-  
+.video {
+  width: 100%;
+}
+
+.warn-unsupported {
+  margin: auto;
+  border-style: solid;
+  border-width: thin;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: lightyellow;
+}
+
+.controls {
+  background-color: #fff;
+  bottom: 0;
+  display: flex;
+  left: 0;
+  /* position: absolute; */
+  right: 0;
+  justify-content: left;
+  padding: 20px 0;
+}
+
+.btn {
+  background-color: black;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 0 10px;
+  padding: 10px;
+}
+
+.btn-record,
+.btn-pause,
+.btn-resume {
+  color: rgb(255, 0, 0);
+}
+
+.button:hover {
+  background-color: #3e8e41;
+}
+
+.save-button {
+  background-color: #2196F3;
+  margin-left: auto;
+}
+
+.save-button:hover {
+  background-color: #0c7cd5;
+}
+
+.cancel-button {
+  background-color: #f44336;
+}
+
+.cancel-button:hover {
+  background-color: #d11a0b;
+}
+
+.download-link {
+  margin-top: 20px;
+}
+
+.icon {
+  margin-right: 5px;
+}
+
+.sticky-nav {
+  position: fixed;
+  top: 0;
+}
+
+video {
+  /* override other styles to make responsive */
+  width: auto    !important;
+  height: 100%   !important;
+}
