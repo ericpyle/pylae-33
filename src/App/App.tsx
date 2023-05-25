@@ -9,7 +9,7 @@ const isSupportedInBrowser = navigator.mediaDevices &&
 const MAX_DURATION = 33000
 const RECORDING_INTERVAL = 3000
 const MAX_RECORDERS = MAX_DURATION / RECORDING_INTERVAL
-// console.log({MAX_RECORDERS, RECORDING_INTERVAL})
+// log({MAX_RECORDERS, RECORDING_INTERVAL})
 
 /*
  * From https://stackoverflow.com/a/53360402 and https://overreacted.io/making-setinterval-declarative-with-react-hooks/
@@ -28,16 +28,16 @@ function useInterval(callback: () => void, delay: number | null) {
     function tick() {
       savedCallback.current!();
     }
-    console.log('useInterval useEffect delay: ' + delay)
-    console.log('savedIntervalId: ' + savedIntervalId.current);
+    log('useInterval useEffect delay: ' + delay)
+    log('savedIntervalId: ' + savedIntervalId.current);
     if (savedIntervalId.current !== undefined) {
-      console.log('clearInterval: ' + savedIntervalId.current);
+      log('clearInterval: ' + savedIntervalId.current);
       clearInterval(savedIntervalId.current)
     }
     if (delay !== null) {
       let id = setInterval(tick, delay);
       savedIntervalId.current = id
-      console.log(`setInterval ${id} ${delay}`)
+      log(`setInterval ${id} ${delay}`)
       return () => clearInterval(id);
     }
   }, [delay]);
@@ -51,8 +51,9 @@ const App: React.FC = () => {
   const mediaStreamRef = useRef<MediaStream>();
   const [countDown, setCountDown] = useState(COUNT_DOWN_FROM);
   const [savedVideoUrl, setSavedVideoUrl] = useState<string>()
+  const [showHowTo, setShowHowTo] = useState(false)
 
-  console.log({ mode, countDown })
+  log({ mode, countDown })
 
   const addToMediaRecorders = () => {
     const newMediaRecorder = new MediaRecorder(mediaStreamRef.current!, {
@@ -60,23 +61,23 @@ const App: React.FC = () => {
       videoBitsPerSecond: 1000000,
     });
     const timestamp = Date.now().toString();
-    console.log({ mediaRecorders: mediaRecordersRef.current.length }, timestamp);
+    log({ mediaRecorders: mediaRecordersRef.current.length }, timestamp);
     newMediaRecorder.start();
-    console.log('started');
+    log('started');
     // if ('memory' in window.performance)
-    // console.log({memory: window.performance.memory})
+    // log({memory: window.performance.memory})
     if (mediaRecordersRef.current.length === MAX_RECORDERS) {
       stopRecorders(mediaRecordersRef.current.slice(0, 1)); // stop the first one
     }
     mediaRecordersRef.current = [...mediaRecordersRef.current.slice(-(MAX_RECORDERS - 1)), newMediaRecorder];
-    console.log({ states: mediaRecordersRef.current.map(mr => mr.state) });
+    log({ states: mediaRecordersRef.current.map(mr => mr.state) });
   }
 
   useInterval(() => {
-    console.log({ countDown, timestamp: Date.now().toString() })
+    log({ countDown, timestamp: Date.now().toString() })
     if (countDown === COUNT_DOWN_FROM) {
       addToMediaRecorders();
-      console.log('pausing for countdown: ' + Date.now().toString());
+      log('pausing for countdown: ' + Date.now().toString());
       // mediaRecordersRef.current[0].pause();
     }
     setCountDown(countDown - 1);
@@ -84,17 +85,17 @@ const App: React.FC = () => {
 
   useInterval(() => {
     if (mediaRecordersRef.current[0].state === 'paused') {
-      console.log('resuming: ' + Date.now().toString());
+      log('resuming: ' + Date.now().toString());
       mediaRecordersRef.current[0].resume();
       return;
     }
-    console.log('adding to mediarecorders: ' + Date.now().toString());
+    log('adding to mediarecorders: ' + Date.now().toString());
     addToMediaRecorders();
 
   }, (mode === 'recording' && countDown == 0) ? RECORDING_INTERVAL : null);
 
   const handleKeyShortcut = (event: KeyboardEvent) => {
-    // console.log(JSON.stringify(event.key));
+    // log(JSON.stringify(event.key));
     if (event.key === ' ' || event.key === 'Enter') {
       event.preventDefault();
       if (mode === 'stopped') {
@@ -174,7 +175,7 @@ const App: React.FC = () => {
   const handleSaveRecording = () => {
     setMode('saving');
     // Stop recording the media recorder with the most seconds
-    console.log({ statesInSave: mediaRecordersRef.current.map(mr => mr.state) })
+    log({ statesInSave: mediaRecordersRef.current.map(mr => mr.state) })
     const longestMediaRecorder = mediaRecordersRef.current[0];
     const recordedChunks: Blob[] = [];
     longestMediaRecorder.ondataavailable = (event) => {
@@ -223,8 +224,8 @@ const App: React.FC = () => {
               <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record
             </button>
             <div className="video-container with-title">
-              {!savedVideoUrl && <h1 className="video-title">How to use Pylae-33</h1>}
-              <video title={savedVideoUrl ? 'Saved video' : 'How to use Pylae-33'}  src={videoUrl} muted controls style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />
+              {!savedVideoUrl && <h1 style={{ cursor: "pointer", textDecorationLine: "underline" }} role="button" tabIndex={0} onClick={() => setShowHowTo(!showHowTo)} onKeyDown={() => setShowHowTo(!showHowTo)} title="Show/Hide video how to use Pylae-33" className="video-title">How to use Pylae-33</h1>}
+              {(showHowTo || savedVideoUrl) && <video title={savedVideoUrl ? 'Saved video' : 'How to use Pylae-33'}  src={videoUrl} muted controls style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />}
             </div>
           </div>
         </div>
@@ -246,7 +247,7 @@ const App: React.FC = () => {
       </div>}
       {(mode === 'recording' && countDown > 0) && (
         <div className="controls sticky-nav" title="(Space/Enter)">
-          <button className="btn btn-pause" onClick={() => console.log('Recording countdown')}>
+          <button className="btn btn-pause" onClick={() => log('Recording countdown')}>
             <i className="fas fa-circle fa-inverse" /> Recording in {padZeros(countDown, countDown)} second{countDown > 1 && 's'}
           </button>
         </div>
@@ -287,6 +288,13 @@ function stopRecorders(mediaRecorders: MediaRecorder[]) {
 
 function padZeros(n: number, ndigits: number = 2) {
   return `${n}`.padStart(ndigits, '0')
+}
+
+const _window = window as any
+_window.debug = false;
+
+function log(message: any, second: any = undefined) {
+  _window.debug && console.log(message, second)
 }
 
 export default App;
