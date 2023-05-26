@@ -213,6 +213,8 @@ const App: React.FC = () => {
     longestMediaRecorder.stop();
   };
 
+  const warnUnsupported = !isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>
+
   const videoUrl = savedVideoUrl ?? 'https://github.com/ericpyle/pylae-33/assets/1125565/ed4c215b-7864-4ff7-ba6d-6ac926b1dec6' 
   return (<>
     <div className="app">
@@ -223,7 +225,10 @@ const App: React.FC = () => {
               <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record
             </button>
             <div className="video-container with-title">
-              <h1 style={{ cursor: "pointer", textDecorationLine: "underline" }} role="button" tabIndex={0} onClick={() => setShowVideo(!showVideo)} onKeyDown={() => setShowVideo(!showVideo)} title="Show/Hide video how to use Pylae-33" className="video-title">{!savedVideoUrl ? 'How to use Pylae-33' : savedVideoFilename}</h1>
+              <div>
+                {warnUnsupported}
+                <h1 style={{ cursor: "pointer", textDecorationLine: "underline" }} role="button" tabIndex={0} onClick={() => setShowVideo(!showVideo)} onKeyDown={() => setShowVideo(!showVideo)} title="Show/Hide video how to use Pylae-33" className="video-title">{!savedVideoUrl ? 'How to use Pylae-33' : savedVideoFilename}</h1>
+              </div>
               {(showVideo) && <video title={savedVideoUrl ? savedVideoFilename : 'How to use Pylae-33'}  src={videoUrl} muted controls style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />}
             </div>
           </div>
@@ -249,8 +254,8 @@ const App: React.FC = () => {
           <button className="btn btn-pause" onClick={() => log('Recording countdown')}>
             <i className="fas fa-circle fa-inverse" /> Recording in {padZeros(countDown, countDown)} second{countDown > 1 && 's'}
           </button>
+          {warnUnsupported}
         </div>
-        {!isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>}
         </>
       )}
       {(mode === 'recording' && countDown <= 0) && (

@@ -22,6 +22,10 @@ body {
   background-color: lightyellow;
 }
 
+.video-container .warn-unsupported {
+  margin-top: -50px;
+}
+
 .controls {
   background-color: #fff;
   bottom: 0;
