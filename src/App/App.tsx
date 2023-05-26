@@ -214,7 +214,7 @@ const App: React.FC = () => {
     </div>
   }
 
-  const videoUrl = savedVideoUrl ?? 'https://user-images.githubusercontent.com/1125565/233755686-a0ebc300-1bd1-4584-afe0-3b02150d39d8.mp4' 
+  const videoUrl = savedVideoUrl ?? 'https://github.com/ericpyle/pylae-33/assets/1125565/ed4c215b-7864-4ff7-ba6d-6ac926b1dec6' 
   return (<>
     <div className="app">
       {(mode === 'stopped' || mode === 'record-pressed') && (
