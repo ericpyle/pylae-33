@@ -85,6 +85,10 @@ const App: React.FC = () => {
   }, (mode === 'recording' && countDown > 0) ? 1000 : null);
 
   useInterval(() => {
+    if (!isSupportedInBrowser) {
+      setMode('stopped');
+      return;
+    }
     if (mediaRecordersRef.current[0].state === 'paused') {
       log('resuming: ' + Date.now().toString());
       mediaRecordersRef.current[0].resume();
@@ -131,22 +135,24 @@ const App: React.FC = () => {
   const handleStartRecording = async () => {
     try {
       setMode('record-pressed');
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: {
-          /* displaySurface seems to block keyboard */
-          /* displaySurface: "monitor", */
-          /* low frameRate seems to lose cursor but is less GPU intensive */
-          frameRate: 11,
-        },
-        audio: false,
-      });
-      // handle if the user stops sharing screen
-      // see https://stackoverflow.com/a/25179198
-      stream.getVideoTracks()[0].onended = function () {
-        mediaRecordersRef.current = [];
-        setMode('stopped');
-      };
-      mediaStreamRef.current = stream;
+      if (isSupportedInBrowser) {
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            /* displaySurface seems to block keyboard */
+            /* displaySurface: "monitor", */
+            /* low frameRate seems to lose cursor but is less GPU intensive */
+            frameRate: 11,
+          },
+          audio: false,
+        });
+        // handle if the user stops sharing screen
+        // see https://stackoverflow.com/a/25179198
+        stream.getVideoTracks()[0].onended = function () {
+          mediaRecordersRef.current = [];
+          setMode('stopped');
+        };
+        mediaStreamRef.current = stream;
+      }
       setCountDown(COUNT_DOWN_FROM);
       setMode('recording');
     } catch (error) {
@@ -207,12 +213,6 @@ const App: React.FC = () => {
     longestMediaRecorder.stop();
   };
 
-  if (!isSupportedInBrowser) {
-    return <div className="app">
-      {!isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>}
-    </div>
-  }
-
   const videoUrl = savedVideoUrl ?? 'https://github.com/ericpyle/pylae-33/assets/1125565/ed4c215b-7864-4ff7-ba6d-6ac926b1dec6' 
   return (<>
     <div className="app">
@@ -244,12 +244,14 @@ const App: React.FC = () => {
           <li>Send support that file</li>
         </ol>
       </div>}
-      {(mode === 'recording' && countDown > 0) && (
+      {(mode === 'recording' && countDown > 0) && (<>
         <div className="controls sticky-nav" title="(Space/Enter)">
           <button className="btn btn-pause" onClick={() => log('Recording countdown')}>
             <i className="fas fa-circle fa-inverse" /> Recording in {padZeros(countDown, countDown)} second{countDown > 1 && 's'}
           </button>
         </div>
+        {!isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>}
+        </>
       )}
       {(mode === 'recording' && countDown <= 0) && (
         <div className="controls sticky-nav" title="(Space/Enter)">
