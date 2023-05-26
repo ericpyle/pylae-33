@@ -9,11 +9,8 @@ The idea is that you just let it record while you do your work, and when you enc
 
 Instructions: Just click "Record" and pick a screen. Do your work. When you've captured something worth saving, press "Pause" and then "Save".
 
-NOTE: Once or twice (but I don't know how to reproduce), I've seen the app fill up the browser memory and crash. 
-Let me know if this happens to you, or if you have ideas how to fix it.
+https://github.com/ericpyle/pylae-33/assets/1125565/ed4c215b-7864-4ff7-ba6d-6ac926b1dec6
 
-
-https://user-images.githubusercontent.com/1125565/233755686-a0ebc300-1bd1-4584-afe0-3b02150d39d8.mp4
 
 ## to dev (Typescript & Vite)
 
