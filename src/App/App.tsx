@@ -50,8 +50,9 @@ const App: React.FC = () => {
   const mediaRecordersRef = useRef<MediaRecorder[]>([]);
   const mediaStreamRef = useRef<MediaStream>();
   const [countDown, setCountDown] = useState(COUNT_DOWN_FROM);
-  const [savedVideoUrl, setSavedVideoUrl] = useState<string>()
-  const [showHowTo, setShowHowTo] = useState(false)
+  const [savedVideoUrl, setSavedVideoUrl] = useState<string>();
+  const [showVideo, setShowVideo] = useState(false);
+  const [savedVideoFilename, setSavedVideoFilename] = useState<string>();
 
   log({ mode, countDown })
 
@@ -183,10 +184,8 @@ const App: React.FC = () => {
     }
     longestMediaRecorder.onstop = () => {
       // Generate the filename
-      const now = new Date();
-      const timestamp = `${now.getFullYear()}-${padZeros(now.getMonth() + 1, 2)}-${padZeros(now.getDate(), 2)} ${padZeros(now.getHours(), 2)}-${padZeros(now.getMinutes(), 2)}${padZeros(now.getSeconds(), 2)}`;
-      const duration = mediaRecordersRef.current.length * RECORDING_INTERVAL / 1000
-      const filename = `pylae-33-${timestamp}_${duration}s.mp4`;
+      const filename = createFilename(mediaRecordersRef);
+      setSavedVideoFilename(filename);
 
       // Save the recording
       const blob = new Blob(recordedChunks, { type: 'video/mp4' });
@@ -224,8 +223,8 @@ const App: React.FC = () => {
               <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record
             </button>
             <div className="video-container with-title">
-              {!savedVideoUrl && <h1 style={{ cursor: "pointer", textDecorationLine: "underline" }} role="button" tabIndex={0} onClick={() => setShowHowTo(!showHowTo)} onKeyDown={() => setShowHowTo(!showHowTo)} title="Show/Hide video how to use Pylae-33" className="video-title">How to use Pylae-33</h1>}
-              {(showHowTo || savedVideoUrl) && <video title={savedVideoUrl ? 'Saved video' : 'How to use Pylae-33'}  src={videoUrl} muted controls style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />}
+              <h1 style={{ cursor: "pointer", textDecorationLine: "underline" }} role="button" tabIndex={0} onClick={() => setShowVideo(!showVideo)} onKeyDown={() => setShowVideo(!showVideo)} title="Show/Hide video how to use Pylae-33" className="video-title">{!savedVideoUrl ? 'How to use Pylae-33' : savedVideoFilename}</h1>
+              {(showVideo) && <video title={savedVideoUrl ? savedVideoFilename : 'How to use Pylae-33'}  src={videoUrl} muted controls style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />}
             </div>
           </div>
         </div>
@@ -278,6 +277,14 @@ const App: React.FC = () => {
     </div>
     </>);
 };
+
+function createFilename(mediaRecordersRef: React.MutableRefObject<MediaRecorder[]>) {
+  const now = new Date();
+  const timestamp = `${now.getFullYear()}-${padZeros(now.getMonth() + 1, 2)}-${padZeros(now.getDate(), 2)} ${padZeros(now.getHours(), 2)}-${padZeros(now.getMinutes(), 2)}${padZeros(now.getSeconds(), 2)}`;
+  const duration = mediaRecordersRef.current.length * RECORDING_INTERVAL / 1000;
+  const filename = `pylae-33-${timestamp}_${duration}s.mp4`;
+  return filename;
+}
 
 function stopRecorders(mediaRecorders: MediaRecorder[]) {
   mediaRecorders.forEach((mediaRecorder) => {
