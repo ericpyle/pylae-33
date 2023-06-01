@@ -189,40 +189,42 @@ const App: React.FC = () => {
     setLooping(!looping);
   }
 
-  const onLoadedMetadata = () => {
-    if (!savedVideoUrl || savedVideoFilename)
+
+  function downloadSavedFile() {
+    if (savedVideoFilename)
       return;
-    // From https://www.thecodehubs.com/infinity-audio-video-duration-issue-fixed-using-javascript/
-    const vid = videoRef.current!
-    if (vid.duration == Infinity) {
-      vid.currentTime = 1e101;
-      vid.ontimeupdate = function () {
-        this.ontimeupdate = () => {
-          if (savedVideoFilename) {
-            return;
-          }
-          // alert(vid.duration);
-          downloadSavedFile();
-          return;
-        }
-        vid.currentTime = 0;
-        return;
-      }
+    const filename = createFilename(videoRef.current!);
+    setSavedVideoFilename(filename);
+    const link = document.createElement('a');
+    link.href = savedVideoUrl!;
+    link.download = filename;
+    link.click();
+  }
+
+  // From https://stackoverflow.com/a/69512775
+  const getDuration = () => {
+    const video = videoRef.current
+    if (!video)
+      return
+    video.currentTime = 0
+    video.removeEventListener('timeupdate', getDuration)
+    console.log(video.duration)
+    downloadSavedFile()
+    return video.duration
+  }
+
+  const onLoadedMetadata = () => {
+    if (!videoRef.current || !savedVideoUrl || savedVideoFilename)
+      return;
+    const video = videoRef.current
+    // From https://stackoverflow.com/a/69512775
+    if (video.duration === Infinity || isNaN(Number(video.duration))) {
+      video.currentTime = 1e101
+      video.addEventListener('timeupdate', getDuration)
       return;
     }
     // Generate the filename
     downloadSavedFile();
-
-    function downloadSavedFile() {
-      if (savedVideoFilename)
-        return;
-      const filename = createFilename(videoRef.current!);
-      setSavedVideoFilename(filename);
-      const link = document.createElement('a');
-      link.href = savedVideoUrl!;
-      link.download = filename;
-      link.click();
-    }
   }
 
   const handleResumeRecording = () => {
