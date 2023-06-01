@@ -53,6 +53,7 @@ const App: React.FC = () => {
   const [savedVideoUrl, setSavedVideoUrl] = useState<string>();
   const [showVideo, setShowVideo] = useState(false);
   const [savedVideoFilename, setSavedVideoFilename] = useState<string>();
+  const [showAltInstructions, setShowAltInstructions] = useState(false);
 
   log({ mode, countDown })
 
@@ -230,25 +231,25 @@ const App: React.FC = () => {
                 <h1 style={{ cursor: "pointer", textDecorationLine: "underline" }} role="button" tabIndex={0} onClick={() => setShowVideo(!showVideo)} onKeyDown={() => setShowVideo(!showVideo)} title="Show/Hide video how to use Pylae-33" className="video-title">{!savedVideoUrl ? 'How to use Pylae-33' : savedVideoFilename}</h1>
               </div>
               {(showVideo) && <video title={savedVideoUrl ? savedVideoFilename : 'How to use Pylae-33'}  src={videoUrl} muted controls style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />}
+              {showAltInstructions && <div>
+                <h3>Alternative instructions:</h3>
+                <h4>Using recording software to try and catch random crashes.</h4>
+                Suggested steps:
+                <ol>
+                  <li>Install OBS from <a href="https://obsproject.com/download" target="_blank">https://obsproject.com/download</a></li>
+                  <li>Run the installer and choose to optimize for virtual camera.</li>
+                  <li>Add the display where [our product] will be used to the Sources panel</li>
+                  <li>Go to Settings -&gt; Output and choose .mp4 format and then select the 'Enable Replay Buffer' under Recording</li>
+                  <li>Set the Maximum Replay Time to 120 seconds.</li>
+                  <li>Click 'Start Replay Buffer' and use [our product]</li>
+                  <li>When it crashes click on the Save Replay button (looks like a download icon)</li>
+                  <li>Send support that file</li>
+                </ol>
+              </div>}
             </div>
           </div>
         </div>
       )}
-      {(mode !== 'stopped') && mode !== 'record-pressed' && <div>
-        <h3>Alternative instructions:</h3>
-        <h4>Using recording software to try and catch random crashes.</h4>
-        Suggested steps:
-        <ol>
-          <li>Install OBS from <a href="https://obsproject.com/download" target="_blank">https://obsproject.com/download</a></li>
-          <li>Run the installer and choose to optimize for virtual camera.</li>
-          <li>Add the display where [our product] will be used to the Sources panel</li>
-          <li>Go to Settings -&gt; Output and choose .mp4 format and then select the 'Enable Replay Buffer' under Recording</li>
-          <li>Set the Maximum Replay Time to 120 seconds.</li>
-          <li>Click 'Start Replay Buffer' and use [our product]</li>
-          <li>When it crashes click on the Save Replay button (looks like a download icon)</li>
-          <li>Send support that file</li>
-        </ol>
-      </div>}
       {(mode === 'recording' && countDown > 0) && (<>
         <div className="controls sticky-nav" title="(Space/Enter)">
           <button className="btn btn-pause" onClick={() => log('Recording countdown')}>
