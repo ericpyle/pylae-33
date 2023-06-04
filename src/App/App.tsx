@@ -73,8 +73,7 @@ const App: React.FC = () => {
     if (mediaRecordersRef.current.length === MAX_RECORDERS) {
       stopRecorders(mediaRecordersRef.current.slice(0, 1)); // stop the first one
     }
-    if (looping)
-      mediaRecordersRef.current = [...mediaRecordersRef.current.slice(-(MAX_RECORDERS - 1)), newMediaRecorder];
+    mediaRecordersRef.current = [...mediaRecordersRef.current.slice(-(MAX_RECORDERS - 1)), newMediaRecorder];
     log({ states: mediaRecordersRef.current.map(mr => mr.state) });
   }
 
@@ -191,8 +190,6 @@ const App: React.FC = () => {
 
 
   function downloadSavedFile() {
-    if (savedVideoFilename)
-      return;
     const filename = createFilename(videoRef.current!);
     setSavedVideoFilename(filename);
     const link = document.createElement('a');
@@ -214,7 +211,7 @@ const App: React.FC = () => {
   }
 
   const onLoadedMetadata = () => {
-    if (!videoRef.current || !savedVideoUrl || savedVideoFilename)
+    if (!videoRef.current)
       return;
     const video = videoRef.current
     // From https://stackoverflow.com/a/69512775
@@ -251,6 +248,7 @@ const App: React.FC = () => {
       const blob = new Blob(recordedChunks, { type: 'video/mp4' });
       const url = URL.createObjectURL(blob);
       setSavedVideoUrl(url);
+      log({savedUrl: url})
 
       // Reset the app
       stopRecorders(mediaRecordersRef.current);
