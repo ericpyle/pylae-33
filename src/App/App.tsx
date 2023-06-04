@@ -205,7 +205,7 @@ const App: React.FC = () => {
       return
     video.currentTime = 0
     video.removeEventListener('timeupdate', getDuration)
-    console.log(video.duration)
+    log({ videoDuration: video.duration})
     downloadSavedFile()
     return video.duration
   }
