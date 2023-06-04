@@ -6,9 +6,11 @@ const isSupportedInBrowser = navigator.mediaDevices &&
   "getDisplayMedia" in navigator.mediaDevices
 
 
+const COUNT_DOWN_FROM = 3
 const MAX_DURATION = 33000
 const RECORDING_INTERVAL = 3000
 const MAX_RECORDERS = MAX_DURATION / RECORDING_INTERVAL
+const LOOPING_DURATION = MAX_DURATION/1000 - COUNT_DOWN_FROM
 // log({MAX_RECORDERS, RECORDING_INTERVAL})
 
 /*
@@ -43,8 +45,6 @@ function useInterval(callback: () => void, delay: number | null) {
   }, [delay]);
 }
 
-const COUNT_DOWN_FROM = 3
-
 const App: React.FC = () => {
   const [mode, setMode] = useState<'stopped' | 'record-pressed' | 'recording' | 'paused' | 'saving'>('stopped');
   const mediaRecordersRef = useRef<MediaRecorder[]>([]);
@@ -55,8 +55,9 @@ const App: React.FC = () => {
   const [showVideo, setShowVideo] = useState(false);
   const [savedVideoFilename, setSavedVideoFilename] = useState<string>();
   const [showAltInstructions, setShowAltInstructions] = useState(false);
-  const [looping, setLooping] = useState(true)
-  const [recordingSeconds, setRecordingSeconds] = useState<number>(0)
+  const [looping, setLooping] = useState(true);
+  const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
+  const [loopingSeconds, setLoopingSeconds] = useState<number>(LOOPING_DURATION);
 
   log({ mode, countDown })
 
@@ -92,6 +93,7 @@ const App: React.FC = () => {
 
   useInterval(() => {
     setRecordingSeconds(recordingSeconds + 1)
+    setLoopingSeconds(loopingSeconds - 1)
   }, (mode === 'recording' && countDown === 0) ? 1000 : null);
 
   useInterval(() => {
@@ -158,6 +160,7 @@ const App: React.FC = () => {
       setRecordingSeconds(0);
       setSavedVideoFilename(undefined);
       setSavedVideoUrl(undefined);
+      setLoopingSeconds(LOOPING_DURATION);
       setMode('record-pressed');
       if (isSupportedInBrowser) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -196,6 +199,7 @@ const App: React.FC = () => {
 
   const handleToggleLoop = () => {
     setLooping(!looping);
+    setLoopingSeconds(LOOPING_DURATION);
   }
 
 
@@ -279,8 +283,7 @@ const App: React.FC = () => {
   const getLoopingTime = () => {
     if (!looping || mediaRecordersRef.current.length === MAX_RECORDERS)
       return ''
-    const timeToLoop = (MAX_DURATION - mediaRecordersRef.current.length * RECORDING_INTERVAL)/1000
-    return 'in ' + convertSecondsToMMSS(timeToLoop) + 's';
+    return 'in ' + convertSecondsToMMSS(loopingSeconds) + 's';
   }
 
   const warnUnsupported = !isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>
