@@ -156,6 +156,8 @@ const App: React.FC = () => {
   const handleStartRecording = async () => {
     try {
       setRecordingSeconds(0);
+      setSavedVideoFilename(undefined);
+      setSavedVideoUrl(undefined);
       setMode('record-pressed');
       if (isSupportedInBrowser) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -297,7 +299,7 @@ const App: React.FC = () => {
                 {warnUnsupported}
                 <h1 style={{ cursor: "pointer", textDecorationLine: "underline" }} role="button" tabIndex={0} onClick={() => setShowVideo(!showVideo)} onKeyDown={() => setShowVideo(!showVideo)} title="Show/Hide video how to use Pylae-33" className="video-title">{!savedVideoUrl ? 'How to use Pylae-33' : savedVideoFilename}</h1>
               </div>
-              <video ref={videoRef} style={{ maxHeight: "640px", minHeight: "200px", display: showVideo ? 'block' : 'none' }} onLoadedMetadata={onLoadedMetadata} title={savedVideoUrl ? savedVideoFilename : 'How to use Pylae-33'}  src={videoUrl} muted controls data-video="0" />
+              <video ref={videoRef} style={{ maxHeight: "640px", minHeight: "200px", display: showVideo ? 'block' : 'none' }} {...(savedVideoUrl?{onLoadedMetadata: onLoadedMetadata}:{})} title={savedVideoUrl ? savedVideoFilename : 'How to use Pylae-33'}  src={videoUrl} muted controls data-video="0" />
               {showAltInstructions && <div>
                 <h3>Alternative instructions:</h3>
                 <h4>Using recording software to try and catch random crashes.</h4>
