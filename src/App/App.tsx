@@ -73,7 +73,7 @@ const App: React.FC = () => {
     // log({memory: window.performance.memory})
     if (mediaRecordersRef.current.length === MAX_RECORDERS) {
       stopRecorders(mediaRecordersRef.current.slice(0, 1)); // stop the first one
-      setRecordingSeconds(recordingSeconds - (Math.floor(RECORDING_INTERVAL/1000) - 1));
+      setRecordingSeconds((MAX_DURATION - RECORDING_INTERVAL)/1000);
     }
     const updatedRecorders = [...mediaRecordersRef.current.slice(-(MAX_RECORDERS - 1)), newMediaRecorder];
     mediaRecordersRef.current = updatedRecorders;
