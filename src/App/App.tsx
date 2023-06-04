@@ -271,9 +271,14 @@ const App: React.FC = () => {
   };
 
   const displayRecordTime = () => {
-    const seconds = recordingSeconds % 60
-    const minutes = Math.floor(recordingSeconds / 60) 
-    return `${padZeros(minutes, 2)}:${padZeros(seconds, 2)}`
+    return convertSecondsToMMSS(recordingSeconds);
+  }
+
+  const getLoopingTime = () => {
+    if (!looping || mediaRecordersRef.current.length === MAX_RECORDERS)
+      return ''
+    const timeToLoop = (MAX_DURATION - mediaRecordersRef.current.length * RECORDING_INTERVAL)/1000
+    return 'in ' + convertSecondsToMMSS(timeToLoop) + 's';
   }
 
   const warnUnsupported = !isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>
@@ -315,7 +320,7 @@ const App: React.FC = () => {
       {(mode === 'recording' && countDown > 0) && (<>
         <div className="controls sticky-nav" title="(Space/Enter)">
           <button className="btn btn-pause" onClick={() => log('Recording countdown')}>
-            <i className="fas fa-circle fa-inverse" /> Recording in {padZeros(countDown, countDown)} second{countDown > 1 && 's'}
+            <i className="fas fa-circle fa-inverse" /> Recording in {padZeros(countDown, countDown)}s
           </button>
           {warnUnsupported}
         </div>
@@ -330,7 +335,10 @@ const App: React.FC = () => {
             </div>
           </button>
           <button className="btn btn-loop" title="(L)" onClick={handleToggleLoop}>
-            <i className={`fa-solid fa-arrows-spin  ${looping && 'fa-spin' || 'fa-beat'}`}></i> {looping && 'Looping' || 'Loop'}
+            <div>
+              <div><i className={`fa-solid fa-arrows-spin  ${looping && 'fa-spin' || 'fa-bea'}`}/> {looping && 'Looping' || 'Loop'}</div>
+            <div>{getLoopingTime()}</div>
+            </div>
           </button>
         </div>
       )}
@@ -356,6 +364,12 @@ const App: React.FC = () => {
     </div>
     </>);
 };
+
+function convertSecondsToMMSS(s: number) {
+  const seconds = s % 60;
+  const minutes = Math.floor(s / 60);
+  return `${padZeros(minutes, 2)}:${padZeros(seconds, 2)}`;
+}
 
 function createFilename(vid: HTMLVideoElement) {
   const now = new Date();
