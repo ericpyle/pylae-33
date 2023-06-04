@@ -56,6 +56,7 @@ const App: React.FC = () => {
   const [savedVideoFilename, setSavedVideoFilename] = useState<string>();
   const [showAltInstructions, setShowAltInstructions] = useState(false);
   const [looping, setLooping] = useState(true)
+  const [recordingSeconds, setRecordingSeconds] = useState<number>(0)
 
   log({ mode, countDown })
 
@@ -86,6 +87,10 @@ const App: React.FC = () => {
     }
     setCountDown(countDown - 1);
   }, (mode === 'recording' && countDown > 0) ? 1000 : null);
+
+  useInterval(() => {
+    setRecordingSeconds(recordingSeconds + 1)
+  }, (mode === 'recording' && countDown === 0) ? 1000 : null);
 
   useInterval(() => {
     if (!isSupportedInBrowser) {
@@ -148,6 +153,7 @@ const App: React.FC = () => {
 
   const handleStartRecording = async () => {
     try {
+      setRecordingSeconds(0);
       setMode('record-pressed');
       if (isSupportedInBrowser) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -259,7 +265,14 @@ const App: React.FC = () => {
       setMode('stopped');
     }
     longestMediaRecorder.stop();
+    setRecordingSeconds(0);
   };
+
+  const displayRecordTime = () => {
+    const seconds = recordingSeconds % 60
+    const minutes = Math.floor(recordingSeconds / 60) 
+    return `${padZeros(minutes, 2)}:${padZeros(seconds, 2)}`
+  }
 
   const warnUnsupported = !isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>
 
@@ -309,7 +322,10 @@ const App: React.FC = () => {
       {(mode === 'recording' && countDown <= 0) && (
         <div className="controls sticky-nav" title="(Space/Enter)">
           <button className="btn btn-pause" onClick={handlePauseRecording}>
-            <i className="fas fa-pause-circle" /> Pause
+            <div>
+              <div><i className="fas fa-pause-circle" /> Pause</div>
+              <div>{displayRecordTime()}</div>
+            </div>
           </button>
           <button className="btn btn-loop" title="(L)" onClick={handleToggleLoop}>
             <i className={`fa-solid fa-arrows-spin  ${looping && 'fa-spin' || 'fa-beat'}`}></i> {looping && 'Looping' || 'Loop'}
@@ -319,7 +335,10 @@ const App: React.FC = () => {
       {(mode === 'paused') && (
         <div className="controls sticky-nav">
           <button className="btn btn-resume" title="(Space/Enter)" onClick={handleResumeRecording}>
-            <i className={'fas fa-pause-circle fa-spin fa-inverse'} /> Resume
+            <div>
+              <div><i className={'fas fa-pause-circle fa-spin fa-inverse'} /> Resume</div>
+              <div>{displayRecordTime()}</div>
+            </div>
           </button>
           <button className="btn btn-save" title="(Ctrl+S)" onClick={handleSaveRecording}>
             <i className="fas fa-save" /> Save
