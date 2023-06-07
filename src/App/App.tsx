@@ -157,6 +157,7 @@ const App: React.FC = () => {
       setRecordingSeconds(0);
       setSavedVideoFilename(undefined);
       setSavedVideoUrl(undefined);
+      setLooping(true);
       setLoopingSeconds(LOOPING_DURATION);
       setMode('record-pressed');
       if (isSupportedInBrowser && !mediaStreamRef.current) {
@@ -207,9 +208,6 @@ const App: React.FC = () => {
       log({ states: mediaRecordersRef.current.map(mr => mr.state) });
     } else if (nextLoopingState === true) {
       handleStartRecording();
-      // addToMediaRecorders();
-      // removeFirstRecorder(mediaRecordersRef);
-      // setRecordingSeconds(0);
     }
   }
 
