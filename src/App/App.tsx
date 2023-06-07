@@ -59,17 +59,19 @@ const App: React.FC = () => {
   const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
   const [loopingSeconds, setLoopingSeconds] = useState<number>(LOOPING_DURATION);
 
-  log({ mode, countDown })
+  log({ mode, countDown });
 
   const addToMediaRecorders = () => {
     const newMediaRecorder = new MediaRecorder(mediaStreamRef.current!, {
       mimeType: 'video/webm; codecs=vp9',
       videoBitsPerSecond: 1000000,
     });
-    const timestamp = Date.now().toString();
-    log({ mediaRecorders: mediaRecordersRef.current.length }, timestamp);
+    log('addToMediaRecorders entered', { mediaRecorders: mediaRecordersRef.current.length });
+    newMediaRecorder.onstart = () => {
+      log('onstart fired', {recordingSeconds});
+    }
     newMediaRecorder.start();
-    log('started');
+    log('start() called');
     // if ('memory' in window.performance)
     // log({memory: window.performance.memory})
     if (mediaRecordersRef.current.length === MAX_RECORDERS) {
@@ -78,16 +80,11 @@ const App: React.FC = () => {
     }
     const updatedRecorders = [...mediaRecordersRef.current.slice(-(MAX_RECORDERS - 1)), newMediaRecorder];
     mediaRecordersRef.current = updatedRecorders;
-    log({ states: mediaRecordersRef.current.map(mr => mr.state) });
+    log('addToMediaRecorders finished', { recordingSeconds, states: mediaRecordersRef.current.map(mr => mr.state) });
   }
 
   useInterval(() => {
-    log({ countDown, timestamp: Date.now().toString() })
-    if (countDown === COUNT_DOWN_FROM) {
-      addToMediaRecorders();
-      log('pausing for countdown: ' + Date.now().toString());
-      // mediaRecordersRef.current[0].pause();
-    }
+    log({ countDown });
     setCountDown(countDown - 1);
   }, (mode === 'recording' && countDown > 0) ? 1000 : null);
 
@@ -96,20 +93,28 @@ const App: React.FC = () => {
     setLoopingSeconds(loopingSeconds - 1)
   }, (mode === 'recording' && countDown === 0) ? 1000 : null);
 
+  useEffect(() => {
+    if (countDown === 0) {
+      log('adding/starting first recorder at countDown 0');
+      addToMediaRecorders();
+    }
+  }, [countDown]);
+
   useInterval(() => {
     if (!isSupportedInBrowser) {
       setMode('stopped');
       return;
     }
-    if (mediaRecordersRef.current[0].state === 'paused') {
-      log('resuming: ' + Date.now().toString());
+    if (mediaRecordersRef.current?.length > 0 &&
+        mediaRecordersRef.current[0].state === 'paused') {
+      log('resuming');
       mediaRecordersRef.current[0].resume();
       return;
     }
-    log('adding to mediarecorders: ' + Date.now().toString());
+    log('adding to mediarecorders: ', { countDown });
     addToMediaRecorders();
 
-  }, (mode === 'recording' && countDown == 0 && looping) ? RECORDING_INTERVAL : null);
+  }, (mode === 'recording' && countDown === 0 && looping) ? RECORDING_INTERVAL : null);
 
   const handleKeyShortcut = (event: KeyboardEvent) => {
     // log(JSON.stringify(event.key));
@@ -146,23 +151,15 @@ const App: React.FC = () => {
     };
   }, [handleKeyShortcut]);
 
-  useEffect(() => {
-    if (!looping) {
-      stopRecorders(mediaRecordersRef.current.slice(1)) // stop all but the first
-      log({ states: mediaRecordersRef.current.map(mr => mr.state) });
-      mediaRecordersRef.current = mediaRecordersRef.current.slice(0, 1); // remove all but first one
-      log({ states: mediaRecordersRef.current.map(mr => mr.state) });
-    }
-  }, [looping]);
-
   const handleStartRecording = async () => {
     try {
+      stopAndResetRecorders(mediaRecordersRef);
       setRecordingSeconds(0);
       setSavedVideoFilename(undefined);
       setSavedVideoUrl(undefined);
       setLoopingSeconds(LOOPING_DURATION);
       setMode('record-pressed');
-      if (isSupportedInBrowser) {
+      if (isSupportedInBrowser && !mediaStreamRef.current) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
             /* displaySurface seems to block keyboard */
@@ -176,6 +173,7 @@ const App: React.FC = () => {
         // see https://stackoverflow.com/a/25179198
         stream.getVideoTracks()[0].onended = function () {
           mediaRecordersRef.current = [];
+          mediaStreamRef.current = undefined;
           setMode('stopped');
         };
         mediaStreamRef.current = stream;
@@ -198,8 +196,21 @@ const App: React.FC = () => {
   };
 
   const handleToggleLoop = () => {
-    setLooping(!looping);
+    const nextLoopingState = !looping;
+    setLooping(nextLoopingState);
     setLoopingSeconds(LOOPING_DURATION);
+    log('handleToggleLoop', {nextLoopingState, recordingSeconds });
+    if (nextLoopingState === false) {
+      stopRecorders(mediaRecordersRef.current.slice(1)); // stop all but the first
+      log({ states: mediaRecordersRef.current.map(mr => mr.state) });
+      mediaRecordersRef.current = mediaRecordersRef.current.slice(0, 1); // remove all but first one
+      log({ states: mediaRecordersRef.current.map(mr => mr.state) });
+    } else if (nextLoopingState === true) {
+      handleStartRecording();
+      // addToMediaRecorders();
+      // removeFirstRecorder(mediaRecordersRef);
+      // setRecordingSeconds(0);
+    }
   }
 
 
@@ -265,11 +276,11 @@ const App: React.FC = () => {
       log({savedUrl: url})
 
       // Reset the app
-      stopRecorders(mediaRecordersRef.current);
+      stopAndResetRecorders(mediaRecordersRef);
       mediaStreamRef.current?.getTracks().forEach((track) => {
         track.stop();
       });
-      mediaRecordersRef.current = [];
+      mediaStreamRef.current = undefined;
       setMode('stopped');
     }
     longestMediaRecorder.stop();
@@ -341,7 +352,7 @@ const App: React.FC = () => {
           </button>
           <button className="btn btn-loop" title="(L)" onClick={handleToggleLoop}>
             <div>
-              <div><i className={`fa-solid fa-arrows-spin  ${looping && 'fa-spin' || 'fa-bea'}`}/> {looping && 'Looping' || 'Loop'}</div>
+              <div><i className={`fa-solid fa-arrows-spin  ${looping && 'fa-spin' || 'fa-bea'}`}/> {looping && 'Looping' || 'Reset/Loop'}</div>
             <div>{getLoopingTime()}</div>
             </div>
           </button>
@@ -369,6 +380,18 @@ const App: React.FC = () => {
     </div>
     </>);
 };
+
+function stopAndResetRecorders(mediaRecordersRef: React.MutableRefObject<MediaRecorder[]>) {
+  stopRecorders(mediaRecordersRef.current);
+  mediaRecordersRef.current = [];
+}
+
+function removeFirstRecorder(mediaRecordersRef: React.MutableRefObject<MediaRecorder[]>) {
+  log('removeFirstRecorder');
+  stopRecorders(mediaRecordersRef.current.slice(0, 1)); // stop the first one
+  mediaRecordersRef.current.splice(0, 1);
+  log({ states: mediaRecordersRef.current.map(mr => mr.state) });
+}
 
 function convertSecondsToMMSS(s: number) {
   const seconds = s % 60;
@@ -399,7 +422,7 @@ const _window = window as any
 _window.debug = false;
 
 function log(message: any, second: any = undefined) {
-  _window.debug && console.log(message, second)
+  _window.debug && console.log(`${new Date().toISOString()}:`, message, second)
 }
 
 export default App;
