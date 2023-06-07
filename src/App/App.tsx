@@ -384,13 +384,6 @@ function stopAndResetRecorders(mediaRecordersRef: React.MutableRefObject<MediaRe
   mediaRecordersRef.current = [];
 }
 
-function removeFirstRecorder(mediaRecordersRef: React.MutableRefObject<MediaRecorder[]>) {
-  log('removeFirstRecorder');
-  stopRecorders(mediaRecordersRef.current.slice(0, 1)); // stop the first one
-  mediaRecordersRef.current.splice(0, 1);
-  log({ states: mediaRecordersRef.current.map(mr => mr.state) });
-}
-
 function convertSecondsToMMSS(s: number) {
   const seconds = s % 60;
   const minutes = Math.floor(s / 60);
