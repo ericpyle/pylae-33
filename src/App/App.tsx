@@ -53,7 +53,7 @@ const App: React.FC = () => {
   const [savedVideoUrl, setSavedVideoUrl] = useState<string>();
   const [showVideo, setShowVideo] = useState(false);
   const [savedVideoFilename, setSavedVideoFilename] = useState<string>();
-  const [showAltInstructions, setShowAltInstructions] = useState(false);
+  const [showAltInstructions, _] = useState(false);
 
   log({ mode, countDown })
 
