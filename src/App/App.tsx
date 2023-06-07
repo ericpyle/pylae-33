@@ -18,7 +18,7 @@ const LOOPING_DURATION = MAX_DURATION/1000 - COUNT_DOWN_FROM
  */
 function useInterval(callback: () => void, delay: number | null) {
   const savedCallback = useRef<() => void>();
-  const savedIntervalId = useRef<number>();
+  const savedIntervalId = useRef<NodeJS.Timer>();
 
   // Remember the latest callback.
   useEffect(() => {
