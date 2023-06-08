@@ -6,9 +6,11 @@ const isSupportedInBrowser = navigator.mediaDevices &&
   "getDisplayMedia" in navigator.mediaDevices
 
 
+const COUNT_DOWN_FROM = 3
 const MAX_DURATION = 33000
 const RECORDING_INTERVAL = 3000
 const MAX_RECORDERS = MAX_DURATION / RECORDING_INTERVAL
+const LOOPING_DURATION = MAX_DURATION/1000 - COUNT_DOWN_FROM
 // log({MAX_RECORDERS, RECORDING_INTERVAL})
 
 /*
@@ -43,62 +45,76 @@ function useInterval(callback: () => void, delay: number | null) {
   }, [delay]);
 }
 
-const COUNT_DOWN_FROM = 3
-
 const App: React.FC = () => {
   const [mode, setMode] = useState<'stopped' | 'record-pressed' | 'recording' | 'paused' | 'saving'>('stopped');
   const mediaRecordersRef = useRef<MediaRecorder[]>([]);
   const mediaStreamRef = useRef<MediaStream>();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [countDown, setCountDown] = useState(COUNT_DOWN_FROM);
   const [savedVideoUrl, setSavedVideoUrl] = useState<string>();
   const [showVideo, setShowVideo] = useState(false);
   const [savedVideoFilename, setSavedVideoFilename] = useState<string>();
   const [showAltInstructions, _] = useState(false);
+  const [looping, setLooping] = useState(true);
+  const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
+  const [loopingSeconds, setLoopingSeconds] = useState<number>(LOOPING_DURATION);
 
-  log({ mode, countDown })
+  log({ mode, countDown });
 
   const addToMediaRecorders = () => {
     const newMediaRecorder = new MediaRecorder(mediaStreamRef.current!, {
       mimeType: 'video/webm; codecs=vp9',
       videoBitsPerSecond: 1000000,
     });
-    const timestamp = Date.now().toString();
-    log({ mediaRecorders: mediaRecordersRef.current.length }, timestamp);
+    log('addToMediaRecorders entered', { mediaRecorders: mediaRecordersRef.current.length });
+    newMediaRecorder.onstart = () => {
+      log('onstart fired', {recordingSeconds});
+    }
     newMediaRecorder.start();
-    log('started');
+    log('start() called');
     // if ('memory' in window.performance)
     // log({memory: window.performance.memory})
     if (mediaRecordersRef.current.length === MAX_RECORDERS) {
       stopRecorders(mediaRecordersRef.current.slice(0, 1)); // stop the first one
+      setRecordingSeconds((MAX_DURATION - RECORDING_INTERVAL)/1000);
     }
-    mediaRecordersRef.current = [...mediaRecordersRef.current.slice(-(MAX_RECORDERS - 1)), newMediaRecorder];
-    log({ states: mediaRecordersRef.current.map(mr => mr.state) });
+    const updatedRecorders = [...mediaRecordersRef.current.slice(-(MAX_RECORDERS - 1)), newMediaRecorder];
+    mediaRecordersRef.current = updatedRecorders;
+    log('addToMediaRecorders finished', { recordingSeconds, states: mediaRecordersRef.current.map(mr => mr.state) });
   }
 
   useInterval(() => {
-    log({ countDown, timestamp: Date.now().toString() })
-    if (countDown === COUNT_DOWN_FROM) {
-      addToMediaRecorders();
-      log('pausing for countdown: ' + Date.now().toString());
-      // mediaRecordersRef.current[0].pause();
-    }
+    log({ countDown });
     setCountDown(countDown - 1);
   }, (mode === 'recording' && countDown > 0) ? 1000 : null);
+
+  useInterval(() => {
+    setRecordingSeconds(recordingSeconds + 1)
+    setLoopingSeconds(loopingSeconds - 1)
+  }, (mode === 'recording' && countDown === 0) ? 1000 : null);
+
+  useEffect(() => {
+    if (countDown === 0) {
+      log('adding/starting first recorder at countDown 0');
+      addToMediaRecorders();
+    }
+  }, [countDown]);
 
   useInterval(() => {
     if (!isSupportedInBrowser) {
       setMode('stopped');
       return;
     }
-    if (mediaRecordersRef.current[0].state === 'paused') {
-      log('resuming: ' + Date.now().toString());
+    if (mediaRecordersRef.current?.length > 0 &&
+        mediaRecordersRef.current[0].state === 'paused') {
+      log('resuming');
       mediaRecordersRef.current[0].resume();
       return;
     }
-    log('adding to mediarecorders: ' + Date.now().toString());
+    log('adding to mediarecorders: ', { countDown });
     addToMediaRecorders();
 
-  }, (mode === 'recording' && countDown == 0) ? RECORDING_INTERVAL : null);
+  }, (mode === 'recording' && countDown === 0 && looping) ? RECORDING_INTERVAL : null);
 
   const handleKeyShortcut = (event: KeyboardEvent) => {
     // log(JSON.stringify(event.key));
@@ -117,6 +133,9 @@ const App: React.FC = () => {
         return;
       }
     }
+    if (mode === 'recording' && event.key === 'l') {
+      handleToggleLoop();
+    }
     if (mode === 'paused' && event.ctrlKey && event.key === 's') {
       event.preventDefault();
       handleSaveRecording();
@@ -132,11 +151,16 @@ const App: React.FC = () => {
     };
   }, [handleKeyShortcut]);
 
-
   const handleStartRecording = async () => {
     try {
+      stopAndResetRecorders(mediaRecordersRef);
+      setRecordingSeconds(0);
+      setSavedVideoFilename(undefined);
+      setSavedVideoUrl(undefined);
+      setLooping(true);
+      setLoopingSeconds(LOOPING_DURATION);
       setMode('record-pressed');
-      if (isSupportedInBrowser) {
+      if (isSupportedInBrowser && !mediaStreamRef.current) {
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
             /* displaySurface seems to block keyboard */
@@ -150,6 +174,7 @@ const App: React.FC = () => {
         // see https://stackoverflow.com/a/25179198
         stream.getVideoTracks()[0].onended = function () {
           mediaRecordersRef.current = [];
+          mediaStreamRef.current = undefined;
           setMode('stopped');
         };
         mediaStreamRef.current = stream;
@@ -171,6 +196,57 @@ const App: React.FC = () => {
     setMode('paused');
   };
 
+  const handleToggleLoop = () => {
+    const nextLoopingState = !looping;
+    setLooping(nextLoopingState);
+    setLoopingSeconds(LOOPING_DURATION);
+    log('handleToggleLoop', {nextLoopingState, recordingSeconds });
+    if (nextLoopingState === false) {
+      stopRecorders(mediaRecordersRef.current.slice(1)); // stop all but the first
+      log({ states: mediaRecordersRef.current.map(mr => mr.state) });
+      mediaRecordersRef.current = mediaRecordersRef.current.slice(0, 1); // remove all but first one
+      log({ states: mediaRecordersRef.current.map(mr => mr.state) });
+    } else if (nextLoopingState === true) {
+      handleStartRecording();
+    }
+  }
+
+
+  function downloadSavedFile() {
+    const filename = createFilename(videoRef.current!);
+    setSavedVideoFilename(filename);
+    const link = document.createElement('a');
+    link.href = savedVideoUrl!;
+    link.download = filename;
+    link.click();
+  }
+
+  // From https://stackoverflow.com/a/69512775
+  const getDuration = () => {
+    const video = videoRef.current
+    if (!video)
+      return
+    video.currentTime = 0
+    video.removeEventListener('timeupdate', getDuration)
+    log({ videoDuration: video.duration})
+    downloadSavedFile()
+    return video.duration
+  }
+
+  const onLoadedMetadata = () => {
+    if (!videoRef.current)
+      return;
+    const video = videoRef.current
+    // From https://stackoverflow.com/a/69512775
+    if (video.duration === Infinity || isNaN(Number(video.duration))) {
+      video.currentTime = 1e101
+      video.addEventListener('timeupdate', getDuration)
+      return;
+    }
+    // Generate the filename
+    downloadSavedFile();
+  }
+
   const handleResumeRecording = () => {
     mediaRecordersRef.current.forEach((mediaRecorder) => {
       if (mediaRecorder.state === 'paused') {
@@ -190,29 +266,34 @@ const App: React.FC = () => {
       recordedChunks.push(event.data)
     }
     longestMediaRecorder.onstop = () => {
-      // Generate the filename
-      const filename = createFilename(mediaRecordersRef);
-      setSavedVideoFilename(filename);
 
       // Save the recording
       const blob = new Blob(recordedChunks, { type: 'video/mp4' });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      link.click();
       setSavedVideoUrl(url);
+      log({savedUrl: url})
 
       // Reset the app
-      stopRecorders(mediaRecordersRef.current);
+      stopAndResetRecorders(mediaRecordersRef);
       mediaStreamRef.current?.getTracks().forEach((track) => {
         track.stop();
       });
-      mediaRecordersRef.current = [];
+      mediaStreamRef.current = undefined;
       setMode('stopped');
     }
     longestMediaRecorder.stop();
+    setRecordingSeconds(0);
   };
+
+  const displayRecordTime = () => {
+    return convertSecondsToMMSS(recordingSeconds);
+  }
+
+  const getLoopingTime = () => {
+    if (!looping || mediaRecordersRef.current.length === MAX_RECORDERS)
+      return ''
+    return 'in ' + convertSecondsToMMSS(loopingSeconds) + 's';
+  }
 
   const warnUnsupported = !isSupportedInBrowser && <div className="warn-unsupported">Sorry, sceen capture is not supported in your browser</div>
 
@@ -230,7 +311,7 @@ const App: React.FC = () => {
                 {warnUnsupported}
                 <h1 style={{ cursor: "pointer", textDecorationLine: "underline" }} role="button" tabIndex={0} onClick={() => setShowVideo(!showVideo)} onKeyDown={() => setShowVideo(!showVideo)} title="Show/Hide video how to use Pylae-33" className="video-title">{!savedVideoUrl ? 'How to use Pylae-33' : savedVideoFilename}</h1>
               </div>
-              {(showVideo) && <video title={savedVideoUrl ? savedVideoFilename : 'How to use Pylae-33'}  src={videoUrl} muted controls style={{ maxHeight: "640px", minHeight: "200px" }} data-video="0" />}
+              <video ref={videoRef} style={{ maxHeight: "640px", minHeight: "200px", display: showVideo ? 'block' : 'none' }} {...(savedVideoUrl?{onLoadedMetadata: onLoadedMetadata}:{})} title={savedVideoUrl ? savedVideoFilename : 'How to use Pylae-33'}  src={videoUrl} muted controls data-video="0" />
               {showAltInstructions && <div>
                 <h3>Alternative instructions:</h3>
                 <h4>Using recording software to try and catch random crashes.</h4>
@@ -253,7 +334,7 @@ const App: React.FC = () => {
       {(mode === 'recording' && countDown > 0) && (<>
         <div className="controls sticky-nav" title="(Space/Enter)">
           <button className="btn btn-pause" onClick={() => log('Recording countdown')}>
-            <i className="fas fa-circle fa-inverse" /> Recording in {padZeros(countDown, countDown)} second{countDown > 1 && 's'}
+            <i className="fas fa-circle fa-inverse" /> Recording in {padZeros(countDown, countDown)}s
           </button>
           {warnUnsupported}
         </div>
@@ -262,14 +343,26 @@ const App: React.FC = () => {
       {(mode === 'recording' && countDown <= 0) && (
         <div className="controls sticky-nav" title="(Space/Enter)">
           <button className="btn btn-pause" onClick={handlePauseRecording}>
-            <i className="fas fa-pause-circle" /> Pause
+            <div>
+              <div><i className="fas fa-pause-circle" /> Pause</div>
+              <div>{displayRecordTime()}</div>
+            </div>
+          </button>
+          <button className="btn btn-loop" title="(L)" onClick={handleToggleLoop}>
+            <div>
+              <div><i className={`fa-solid fa-arrows-spin  ${looping && 'fa-spin' || 'fa-bea'}`}/> {looping && 'Looping' || 'Reset/Loop'}</div>
+            <div>{getLoopingTime()}</div>
+            </div>
           </button>
         </div>
       )}
       {(mode === 'paused') && (
         <div className="controls sticky-nav">
           <button className="btn btn-resume" title="(Space/Enter)" onClick={handleResumeRecording}>
-            <i className={'fas fa-pause-circle fa-spin fa-inverse'} /> Resume
+            <div>
+              <div><i className={'fas fa-pause-circle fa-spin fa-inverse'} /> Resume</div>
+              <div>{displayRecordTime()}</div>
+            </div>
           </button>
           <button className="btn btn-save" title="(Ctrl+S)" onClick={handleSaveRecording}>
             <i className="fas fa-save" /> Save
@@ -286,10 +379,21 @@ const App: React.FC = () => {
     </>);
 };
 
-function createFilename(mediaRecordersRef: React.MutableRefObject<MediaRecorder[]>) {
+function stopAndResetRecorders(mediaRecordersRef: React.MutableRefObject<MediaRecorder[]>) {
+  stopRecorders(mediaRecordersRef.current);
+  mediaRecordersRef.current = [];
+}
+
+function convertSecondsToMMSS(s: number) {
+  const seconds = s % 60;
+  const minutes = Math.floor(s / 60);
+  return `${padZeros(minutes, 2)}:${padZeros(seconds, 2)}`;
+}
+
+function createFilename(vid: HTMLVideoElement) {
   const now = new Date();
   const timestamp = `${now.getFullYear()}-${padZeros(now.getMonth() + 1, 2)}-${padZeros(now.getDate(), 2)} ${padZeros(now.getHours(), 2)}-${padZeros(now.getMinutes(), 2)}${padZeros(now.getSeconds(), 2)}`;
-  const duration = mediaRecordersRef.current.length * RECORDING_INTERVAL / 1000;
+  const duration = Math.floor(vid.duration);
   const filename = `pylae-33-${timestamp}_${duration}s.mp4`;
   return filename;
 }
@@ -309,7 +413,7 @@ const _window = window as any
 _window.debug = false;
 
 function log(message: any, second: any = undefined) {
-  _window.debug && console.log(message, second)
+  _window.debug && console.log(`${new Date().toISOString()}:`, message, second)
 }
 
 export default App;
