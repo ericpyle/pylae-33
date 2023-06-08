@@ -54,7 +54,7 @@ const App: React.FC = () => {
   const [savedVideoUrl, setSavedVideoUrl] = useState<string>();
   const [showVideo, setShowVideo] = useState(false);
   const [savedVideoFilename, setSavedVideoFilename] = useState<string>();
-  const [showAltInstructions, setShowAltInstructions] = useState(false);
+  const [showAltInstructions, _] = useState(false);
   const [looping, setLooping] = useState(true);
   const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
   const [loopingSeconds, setLoopingSeconds] = useState<number>(LOOPING_DURATION);
