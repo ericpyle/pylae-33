@@ -10,7 +10,7 @@ export default defineConfig({
       "**/*",
     ],
     workbox: {
-      globPatterns: []
+      globPatterns: ["**/*"]
     }
   })],
 })
