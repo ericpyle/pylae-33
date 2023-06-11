@@ -20,10 +20,10 @@ export default defineConfig({
         "scope": "/",
         "icons": [
           {
-            "src": "./src/assets/fa-solid-900-7152a693.woff2",
+            "src": "/assets/fa-solid-900-7152a693.woff2",
           },
           {
-            "src": "./src/assets/fa-solid-900-67a65763.ttf",
+            "src": "/assets/fa-solid-900-67a65763.ttf",
           }
         ]
     }
