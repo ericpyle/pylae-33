@@ -9,5 +9,23 @@ export default defineConfig({
     includeAssets: [
       "**/*",
     ],
+    manifest:
+      {
+        "name": "pylae-33",
+        "short_name": "pylae-33",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "lang": "en",
+        "scope": "/",
+        "icons": [
+          {
+            "src": "./src/assets/fa-solid-900-7152a693.woff2",
+          },
+          {
+            "src": "./src/assets/fa-solid-900-67a65763.ttf",
+          }
+        ]
+    }
   })],
 })
