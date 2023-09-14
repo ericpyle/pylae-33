@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@alwaysmeticulous/recorder-loader": "^2.73.0",
     "@fortawesome/fontawesome-free": "^6.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
