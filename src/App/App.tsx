@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
+const howToVideoUrl = 'https://github.com/ericpyle/pylae-33/assets/1125565/ed4c215b-7864-4ff7-ba6d-6ac926b1dec6'
+
 const isSupportedInBrowser = navigator.mediaDevices &&
   "getDisplayMedia" in navigator.mediaDevices
 
@@ -12,6 +14,27 @@ const RECORDING_INTERVAL = 3000
 const MAX_RECORDERS = MAX_DURATION / RECORDING_INTERVAL
 const LOOPING_DURATION = MAX_DURATION/1000 - COUNT_DOWN_FROM
 // log({MAX_RECORDERS, RECORDING_INTERVAL})
+
+const useDownloadVideo = (url: string, dbName: string, storeName: string) => {
+  useEffect(() => {
+    const downloadVideo = async () => {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const dbReq = indexedDB.open(dbName);
+      dbReq.onupgradeneeded = () => {
+        const db = dbReq.result;
+        db.createObjectStore(storeName);
+      };
+      dbReq.onsuccess = () => {
+        const db = dbReq.result;
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        store.put(blob, url);
+      };
+    };
+    downloadVideo();
+  }, [url, dbName, storeName]);
+};
 
 /*
  * From https://stackoverflow.com/a/53360402 and https://overreacted.io/making-setinterval-declarative-with-react-hooks/
@@ -58,6 +81,9 @@ const App: React.FC = () => {
   const [looping, setLooping] = useState(true);
   const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
   const [loopingSeconds, setLoopingSeconds] = useState<number>(LOOPING_DURATION);
+  
+  const howToVideoUrl = 'https://github.com/ericpyle/pylae-33/assets/1125565/ed4c215b-7864-4ff7-ba6d-6ac926b1dec6';
+  useDownloadVideo(howToVideoUrl, 'Assets', 'videoBlobs' );
 
   log({ mode, countDown });
 
