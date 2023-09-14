@@ -304,7 +304,7 @@ const App: React.FC = () => {
         <div>
           <div className="controls sticky-nav" title="(Space/Enter)">
             <button type="button" className="btn btn-record" onClick={handleStartRecording}>
-              <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record
+              <i className={`fas fa-circle ${mode === 'record-pressed' && 'fa-inverse'}`} /> Record (Hello, meticulous.ai!)
             </button>
             <div className="video-container with-title">
               <div>
