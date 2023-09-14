@@ -24,7 +24,7 @@ async function startApp() {
 
 function isProduction() {
     // TODO: Update me with your production hostname
-    return window.location.hostname !== 'pylae-33.vercel.app';
+    return window.location.hostname === 'pylae-33.vercel.app';
 }
 
 startApp();
